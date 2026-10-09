@@ -6,64 +6,855 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>競馬期待値計算ツール</title>
 <style>
-body{font-family:Arial,sans-serif;background:#f3f5f8;color:#172033;margin:0;padding:20px}
-main{max-width:620px;margin:auto;background:white;padding:22px;border-radius:16px;box-shadow:0 4px 18px #0001}
-h1{font-size:25px}p{line-height:1.6;color:#596579}
-label{display:block;font-weight:bold;margin-top:16px}
-input,select{box-sizing:border-box;width:100%;padding:12px;margin-top:7px;border:1px solid #ccd3df;border-radius:8px;font-size:16px}
-button{width:100%;padding:14px;margin-top:20px;border:0;border-radius:9px;background:#126b4b;color:white;font-size:17px;font-weight:bold}
-.result{background:#eef7f1;padding:16px;border-radius:10px;margin-top:18px}
-.big{font-size:28px;font-weight:bold;color:#126b4b}
-.small{font-size:13px;color:#667085}
+:root {
+  --green:#126b4b;
+  --green-light:#eaf6ef;
+  --navy:#172033;
+  --muted:#667085;
+  --border:#dce2ea;
+  --bg:#f3f5f8;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; padding:16px; background:var(--bg); color:var(--navy);
+  font-family:Arial,"Noto Sans JP",sans-serif;
+}
+main { max-width:1100px; margin:auto; }
+header { padding:8px 0 18px; }
+h1 { font-size:27px; margin:0 0 8px; }
+h2 { font-size:20px; margin:0 0 16px; }
+h3 { font-size:16px; margin:16px 0 8px; }
+p { line-height:1.7; color:var(--muted); }
+.panel {
+  background:white; border-radius:14px; padding:20px; margin-bottom:16px;
+  box-shadow:0 3px 14px #00000008;
+}
+.grid {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;
+}
+.field { min-width:0; }
+label { display:block; font-size:14px; font-weight:bold; margin-bottom:6px; }
+input,select,textarea {
+  width:100%; padding:11px; border:1px solid #cbd3df; border-radius:8px;
+  font-size:15px; background:white; color:var(--navy);
+}
+textarea { min-height:75px; resize:vertical; }
+input:focus,select:focus,textarea:focus {
+  outline:2px solid #b7dfca; border-color:var(--green);
+}
+button {
+  cursor:pointer; border:0; border-radius:8px; padding:11px 15px;
+  font-weight:bold; font-size:14px; background:var(--green); color:white;
+}
+button.secondary { background:#e9edf2; color:var(--navy); }
+button.danger { background:#a93232; }
+button.small { padding:7px 10px; font-size:12px; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:15px; }
+.help { font-size:13px; margin:6px 0 0; }
+.hidden { display:none !important; }
+.metrics {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;
+  margin-top:15px;
+}
+.metric { background:#f5f7fa; border-radius:10px; padding:13px; min-width:0; }
+.metric .label { color:var(--muted); font-size:12px; }
+.metric .value { font-size:21px; font-weight:bold; margin-top:5px; overflow-wrap:anywhere; }
+.positive { color:var(--green); }
+.negative { color:#b42318; }
+.table-wrap { overflow-x:auto; width:100%; margin-top:12px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th,td { padding:9px 8px; text-align:left; border-bottom:1px solid #e8ebf0; }
+th { background:#f5f7fa; white-space:nowrap; }
+td input { min-width:88px; padding:8px; font-size:13px; }
+td .compact { min-width:65px; }
+.notice {
+  padding:12px; border-radius:8px; background:#fff8e8; color:#765515;
+  font-size:13px; line-height:1.6; margin-top:12px;
+}
+.status { margin-top:10px; font-size:14px; font-weight:bold; }
+hr { border:0; border-top:1px solid var(--border); margin:20px 0; }
+footer { font-size:12px; color:var(--muted); padding:0 0 25px; }
+@media(max-width:650px) {
+  body { padding:10px; }
+  .panel { padding:15px; }
+  .grid { grid-template-columns:1fr; }
+  .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  h1 { font-size:23px; }
+}
 </style>
 </head>
 <body>
 <main>
-<h1>🏇 競馬期待値計算ツール</h1>
-<p>オッズと自分で予想した的中確率から、馬券の期待値を計算します。</p>
-<label>馬券の名前（任意）</label>
-<input id="name" placeholder="例：東京11R 単勝3番">
-<label>購入金額（円）</label>
-<input id="stake" type="number" min="1" value="100">
-<label>オッズ（倍率）</label>
-<input id="odds" type="number" min="1.01" step="0.1" value="5">
-<label>自分が予想する的中確率（%）</label>
-<input id="prob" type="number" min="0" max="100" step="0.1" value="25">
-<button id="calc" type="button">期待値を計算</button>
-<div class="result" aria-live="polite">
-<div>期待利益（長期平均の理論値）</div>
-<div class="big" id="ev">+25円</div>
-<div id="roi">期待回収率：125%</div>
-<hr>
-<div id="break">損益分岐の的中確率：20%</div>
-<div id="return">的中時の払戻額：500円</div>
-<p class="small" id="note">※入力した確率が正しいと仮定した理論値です。的中を保証するものではありません。</p>
-</div>
+<header>
+  <h1>🏇 競馬期待値計算ツール</h1>
+  <p>買い目を組み立て、期待値を比較し、購入履歴と収支を管理するツールです。</p>
+</header>
+
+<section class="panel">
+  <h2>① かんたん期待値計算</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="singleName">買い目の名前（任意）</label>
+      <input id="singleName" placeholder="例：東京11R 単勝3番">
+    </div>
+    <div class="field">
+      <label for="singleStake">購入金額（円）</label>
+      <input id="singleStake" type="number" min="1" value="100">
+    </div>
+    <div class="field">
+      <label for="singleOdds">オッズ（倍）</label>
+      <input id="singleOdds" type="number" min="0.01" step="0.1" value="5">
+    </div>
+    <div class="field">
+      <label for="singleProb">予想的中確率（%）</label>
+      <input id="singleProb" type="number" min="0" max="100" step="0.1" value="25">
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="label">期待利益</div><div id="singleEV" class="value">+25円</div></div>
+    <div class="metric"><div class="label">期待回収率</div><div id="singleROI" class="value">125.0%</div></div>
+    <div class="metric"><div class="label">損益分岐確率</div><div id="singleBreak" class="value">20.0%</div></div>
+    <div class="metric"><div class="label">的中時の払戻額</div><div id="singleReturn" class="value">500円</div></div>
+  </div>
+  <div class="actions">
+    <button id="saveSingle">この買い目を履歴に保存</button>
+  </div>
+  <p class="help">期待利益 ＝ 購入金額 ×（オッズ × 的中確率 − 1）。予想確率が正しいと仮定した理論値です。</p>
+</section>
+
+<section class="panel">
+  <h2>② 馬券の組み合わせを作成</h2>
+  <div class="grid">
+    <div class="field">
+      <label for="raceName">レース名</label>
+      <input id="raceName" placeholder="例：東京11R">
+    </div>
+    <div class="field">
+      <label for="betType">馬券の種類</label>
+      <select id="betType">
+        <option value="単勝">単勝</option>
+        <option value="複勝">複勝</option>
+        <option value="枠連">枠連</option>
+        <option value="馬連">馬連</option>
+        <option value="馬単">馬単</option>
+        <option value="ワイド">ワイド</option>
+        <option value="三連複">三連複</option>
+        <option value="三連単">三連単</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="buyMethod">買い方</label>
+      <select id="buyMethod">
+        <option value="individual">個別指定</option>
+        <option value="box">ボックス</option>
+        <option value="axis">軸流し</option>
+        <option value="formation">フォーメーション</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="defaultStake">1点あたりの購入金額（円）</label>
+      <input id="defaultStake" type="number" min="1" step="100" value="100">
+    </div>
+  </div>
+
+  <div id="individualFields">
+    <h3>買い目を個別指定</h3>
+    <div class="field">
+      <label for="individualInput">組み合わせ（1点ずつ改行）</label>
+      <textarea id="individualInput" placeholder="例：3&#10;5&#10;8"></textarea>
+      <p class="help">単勝・複勝は「3」、馬連・馬単などは「3-5」のように入力します。</p>
+    </div>
+  </div>
+
+  <div id="boxFields" class="hidden">
+    <h3>ボックス</h3>
+    <div class="field">
+      <label for="boxInput">選択する番号</label>
+      <input id="boxInput" placeholder="例：1, 3, 5, 8">
+      <p class="help">選択した番号から、馬券の種類に応じた全組み合わせを作成します。</p>
+    </div>
+  </div>
+
+  <div id="axisFields" class="hidden">
+    <h3>軸流し</h3>
+    <div class="grid">
+      <div class="field">
+        <label for="axisInput">軸の番号</label>
+        <input id="axisInput" placeholder="例：3">
+      </div>
+      <div class="field">
+        <label for="opponentsInput">相手の番号</label>
+        <input id="opponentsInput" placeholder="例：1, 5, 7, 8">
+      </div>
+    </div>
+    <p class="help">馬単・三連単では軸を1着固定として組み合わせます。馬連・ワイド・三連複は着順を区別しません。</p>
+  </div>
+
+  <div id="formationFields" class="hidden">
+    <h3>フォーメーション</h3>
+    <div class="grid">
+      <div class="field">
+        <label for="form1">1列目</label>
+        <input id="form1" placeholder="例：3">
+      </div>
+      <div class="field">
+        <label for="form2">2列目</label>
+        <input id="form2" placeholder="例：1, 5, 7">
+      </div>
+      <div class="field">
+        <label for="form3">3列目（三連系）</label>
+        <input id="form3" placeholder="例：1, 5, 7, 8">
+      </div>
+    </div>
+    <p class="help">番号はカンマ区切りで入力します。同じ番号を含む組み合わせは除外し、重複買い目も整理します。</p>
+  </div>
+
+  <div class="actions">
+    <button id="generate">組み合わせを作成</button>
+    <button id="clearGenerated" class="secondary">買い目をクリア</button>
+  </div>
+  <div id="generateStatus" class="status" aria-live="polite"></div>
+
+  <div id="generatedArea" class="hidden">
+    <hr>
+    <h3>買い目ごとの期待値</h3>
+    <p class="help">各行のオッズ・的中確率・購入金額を入力すると、期待利益と期待回収率が自動更新されます。</p>
+    <div class="metrics">
+      <div class="metric"><div class="label">買い目数</div><div id="comboCount" class="value">0点</div></div>
+      <div class="metric"><div class="label">購入予定額</div><div id="totalStake" class="value">0円</div></div>
+      <div class="metric"><div class="label">期待利益合計</div><div id="totalEV" class="value">0円</div></div>
+      <div class="metric"><div class="label">期待回収率</div><div id="totalROI" class="value">—</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>買い目</th>
+            <th>オッズ</th>
+            <th>的中確率(%)</th>
+            <th>購入額(円)</th>
+            <th>期待利益</th>
+            <th>期待回収率</th>
+            <th>削除</th>
+          </tr>
+        </thead>
+        <tbody id="comboBody"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="saveCombos">入力した買い目を履歴に保存</button>
+      <button id="exportCombos" class="secondary">買い目をCSV出力</button>
+    </div>
+    <p class="help">的中確率は「その買い目が的中する確率」です。複数の買い目の確率は、同じレース内で矛盾しないように見積もってください。</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>③ 購入履歴・収支管理</h2>
+  <p class="help">払戻額は、各買い目について実際に受け取った金額を入力します。外れた買い目は0円です。</p>
+  <div class="metrics">
+    <div class="metric"><div class="label">総購入額</div><div id="historyStake" class="value">0円</div></div>
+    <div class="metric"><div class="label">総払戻額</div><div id="historyPayout" class="value">0円</div></div>
+    <div class="metric"><div class="label">収支</div><div id="historyNet" class="value">0円</div></div>
+    <div class="metric"><div class="label">回収率</div><div id="historyROI" class="value">—</div></div>
+  </div>
+  <div class="actions">
+    <button id="exportHistory">履歴をCSV出力</button>
+    <button id="clearHistory" class="danger">履歴をすべて削除</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>レース・買い目</th>
+          <th>オッズ</th>
+          <th>購入額(円)</th>
+          <th>払戻額(円)</th>
+          <th>収支</th>
+          <th>削除</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+  <div id="historyStatus" class="status" aria-live="polite"></div>
+  <div class="notice">
+    履歴はこのブラウザの保存領域に保存されます。同じ端末・ブラウザで利用してください。ブラウザデータの削除や端末変更で消えることがあるため、定期的なCSV保存をおすすめします。
+  </div>
+</section>
+
+<footer>
+  注意：このツールは計算・記録用です。実際のオッズや払戻金は変動します。期待値は予想的中確率の精度に左右され、利益や的中を保証するものではありません。
+</footer>
 </main>
+
 <script>
-(function(){
-function calc(){
-var stake=Number(document.getElementById('stake').value);
-var odds=Number(document.getElementById('odds').value);
-var prob=Number(document.getElementById('prob').value);
-var ev=document.getElementById('ev');
-if(!Number.isFinite(stake)||!Number.isFinite(odds)||!Number.isFinite(prob)||stake<=0||odds<=1||prob<0||prob>100){
-ev.textContent='入力を確認してください';
-document.getElementById('roi').textContent='金額は1円以上、オッズは1より大きく、確率は0〜100%で入力してください。';
-document.getElementById('break').textContent='';
-document.getElementById('return').textContent='';
-return;
-}
-var expected=stake*(odds*prob/100-1);
-ev.textContent=(expected>0?'+':'')+Math.round(expected).toLocaleString('ja-JP')+'円';
-document.getElementById('roi').textContent='期待回収率：'+(odds*prob).toFixed(1)+'%';
-document.getElementById('break').textContent='損益分岐の的中確率：'+(100/odds).toFixed(2)+'%';
-document.getElementById('return').textContent='的中時の払戻額：約'+Math.round(stake*odds).toLocaleString('ja-JP')+'円';
-document.getElementById('note').textContent=' '+(expected>0?'理論上はプラス期待値です。ただし予測確率が正しいことが前提です。':'理論上はプラス期待値ではありません。予測確率の精度に注意してください。')+' 払戻額はオッズが変動すると変わります。';
-}
-document.getElementById('calc').addEventListener('click',calc);
-['stake','odds','prob'].forEach(function(id){document.getElementById(id).addEventListener('input',calc);});
-calc();
+(function () {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const money = n => Math.round(n).toLocaleString("ja-JP") + "円";
+  const signedMoney = n => (n > 0 ? "+" : "") + money(n);
+  const pct = n => n.toFixed(1) + "%";
+
+  const config = {
+    "単勝": { count: 1, ordered: false },
+    "複勝": { count: 1, ordered: false },
+    "枠連": { count: 2, ordered: false },
+    "馬連": { count: 2, ordered: false },
+    "馬単": { count: 2, ordered: true },
+    "ワイド": { count: 2, ordered: false },
+    "三連複": { count: 3, ordered: false },
+    "三連単": { count: 3, ordered: true }
+  };
+
+  let combos = [];
+  let history = [];
+
+  function todayLocal() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function readHistory() {
+    try {
+      const raw = localStorage.getItem("keibaEVHistoryV1");
+      const parsed = raw ? JSON.parse(raw) : [];
+      history = Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      history = [];
+    }
+  }
+
+  function persistHistory() {
+    try {
+      localStorage.setItem("keibaEVHistoryV1", JSON.stringify(history));
+      $("historyStatus").textContent = "履歴を保存しました。";
+    } catch (e) {
+      $("historyStatus").textContent =
+        "ブラウザに保存できませんでした。プライベートブラウズ設定などをご確認ください。";
+    }
+  }
+
+  function expected(stake, odds, probability) {
+    return stake * (odds * probability / 100 - 1);
+  }
+
+  function updateSingle() {
+    const stake = Number($("singleStake").value);
+    const odds = Number($("singleOdds").value);
+    const prob = Number($("singleProb").value);
+    const valid = stake > 0 && odds > 0 && prob >= 0 && prob <= 100 &&
+      Number.isFinite(stake) && Number.isFinite(odds) && Number.isFinite(prob);
+
+    if (!valid) {
+      $("singleEV").textContent = "入力確認";
+      $("singleROI").textContent = "—";
+      $("singleBreak").textContent = "—";
+      $("singleReturn").textContent = "—";
+      return;
+    }
+
+    const ev = expected(stake, odds, prob);
+    $("singleEV").textContent = signedMoney(ev);
+    $("singleEV").className = "value " + (ev >= 0 ? "positive" : "negative");
+    $("singleROI").textContent = pct(odds * prob);
+    $("singleBreak").textContent = pct(100 / odds);
+    $("singleReturn").textContent = money(stake * odds);
+  }
+
+  function selectedNumbers(value) {
+    return [...new Set(
+      String(value || "")
+        .split(/[\s,、，]+/)
+        .map(s => s.trim())
+        .filter(Boolean)
+    )];
+  }
+
+  function parseManual(value) {
+    return String(value || "")
+      .split(/\n/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => s.replace(/[－—−]/g, "-").replace(/\s+/g, ""));
+  }
+
+  function permutations(arr, k) {
+    const out = [];
+    function walk(path, remaining) {
+      if (path.length === k) {
+        out.push(path.slice());
+        return;
+      }
+      remaining.forEach((item, index) => {
+        walk(path.concat(item), remaining.filter((_, i) => i !== index));
+      });
+    }
+    walk([], arr);
+    return out;
+  }
+
+  function combinations(arr, k) {
+    const out = [];
+    function walk(start, path) {
+      if (path.length === k) {
+        out.push(path.slice());
+        return;
+      }
+      for (let i = start; i < arr.length; i++) {
+        walk(i + 1, path.concat(arr[i]));
+      }
+    }
+    walk(0, []);
+    return out;
+  }
+
+  function makeTicket(numbers, type) {
+    const cfg = config[type];
+    if (!cfg) return null;
+    if (numbers.length !== cfg.count) return null;
+    if (new Set(numbers).size !== numbers.length) return null;
+
+    if (!cfg.ordered) return numbers.slice().sort((a, b) => {
+      const na = Number(a), nb = Number(b);
+      if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+      return String(a).localeCompare(String(b), "ja");
+    }).join("-");
+    return numbers.join("-");
+  }
+
+  function normalizeTicket(ticket, type) {
+    const parts = ticket.split("-").map(s => s.trim()).filter(Boolean);
+    return makeTicket(parts, type);
+  }
+
+  function dedupe(tickets) {
+    return [...new Set(tickets.filter(Boolean))];
+  }
+
+  function createTickets() {
+    const type = $("betType").value;
+    const method = $("buyMethod").value;
+    const cfg = config[type];
+    let tickets = [];
+
+    if (method === "individual") {
+      tickets = parseManual($("individualInput").value)
+        .map(t => normalizeTicket(t, type))
+        .filter(Boolean);
+    }
+
+    if (method === "box") {
+      const nums = selectedNumbers($("boxInput").value);
+      tickets = (cfg.ordered ? permutations(nums, cfg.count) : combinations(nums, cfg.count))
+        .map(arr => makeTicket(arr, type));
+    }
+
+    if (method === "axis") {
+      const axis = selectedNumbers($("axisInput").value);
+      const opponents = selectedNumbers($("opponentsInput").value)
+        .filter(n => !axis.includes(n));
+
+      if (axis.length !== 1) {
+        throw new Error("軸の番号は1つだけ入力してください。");
+      }
+      if (opponents.length < cfg.count - 1) {
+        throw new Error("相手の番号が足りません。");
+      }
+
+      if (cfg.count === 1) {
+        tickets = [makeTicket(axis, type)];
+      } else if (!cfg.ordered) {
+        tickets = combinations(opponents, cfg.count - 1)
+          .map(arr => makeTicket(axis.concat(arr), type));
+      } else {
+        tickets = permutations(opponents, cfg.count - 1)
+          .map(arr => makeTicket(axis.concat(arr), type));
+      }
+    }
+
+    if (method === "formation") {
+      const first = selectedNumbers($("form1").value);
+      const second = selectedNumbers($("form2").value);
+      const third = selectedNumbers($("form3").value);
+
+      if (cfg.count === 1) {
+        tickets = first.map(n => makeTicket([n], type));
+      } else if (cfg.count === 2) {
+        tickets = [];
+        first.forEach(a => second.forEach(b => {
+          const t = makeTicket([a, b], type);
+          if (t) tickets.push(t);
+        }));
+      } else {
+        tickets = [];
+        first.forEach(a => second.forEach(b => third.forEach(c => {
+          const t = makeTicket([a, b, c], type);
+          if (t) tickets.push(t);
+        })));
+      }
+    }
+
+    tickets = dedupe(tickets);
+    if (!tickets.length) {
+      throw new Error("有効な組み合わせがありません。入力番号と買い方を確認してください。");
+    }
+    if (tickets.length > 5000) {
+      throw new Error("組み合わせが多すぎます。番号を減らして再作成してください。");
+    }
+    return tickets;
+  }
+
+  function refreshMethodFields() {
+    const method = $("buyMethod").value;
+    $("individualFields").classList.toggle("hidden", method !== "individual");
+    $("boxFields").classList.toggle("hidden", method !== "box");
+    $("axisFields").classList.toggle("hidden", method !== "axis");
+    $("formationFields").classList.toggle("hidden", method !== "formation");
+  }
+
+  function generate() {
+    try {
+      const tickets = createTickets();
+      const stake = Math.max(1, Number($("defaultStake").value) || 100);
+      combos = tickets.map((ticket, i) => ({
+        id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        ticket,
+        odds: "",
+        prob: "",
+        stake
+      }));
+      $("generateStatus").textContent = `${combos.length}点の買い目を作成しました。`;
+      $("generatedArea").classList.remove("hidden");
+      renderCombos();
+    } catch (e) {
+      $("generateStatus").textContent = e.message || "組み合わせを作成できませんでした。";
+      $("generatedArea").classList.add("hidden");
+    }
+  }
+
+  function renderCombos() {
+    const body = $("comboBody");
+    body.innerHTML = "";
+
+    combos.forEach(item => {
+      const tr = document.createElement("tr");
+
+      const name = document.createElement("td");
+      name.textContent = item.ticket;
+      tr.appendChild(name);
+
+      tr.appendChild(numberCell(item, "odds", "例 5.2", "0.01"));
+      tr.appendChild(numberCell(item, "prob", "例 20", "0.1"));
+      tr.appendChild(numberCell(item, "stake", "100", "1"));
+
+      const evCell = document.createElement("td");
+      evCell.dataset.ev = item.id;
+      tr.appendChild(evCell);
+
+      const roiCell = document.createElement("td");
+      roiCell.dataset.roi = item.id;
+      tr.appendChild(roiCell);
+
+      const removeCell = document.createElement("td");
+      const remove = document.createElement("button");
+      remove.className = "small secondary";
+      remove.textContent = "削除";
+      remove.addEventListener("click", () => {
+        combos = combos.filter(c => c.id !== item.id);
+        renderCombos();
+      });
+      removeCell.appendChild(remove);
+      tr.appendChild(removeCell);
+      body.appendChild(tr);
+    });
+
+    updateComboTotals();
+  }
+
+  function numberCell(item, key, placeholder, step) {
+    const td = document.createElement("td");
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = key === "prob" ? "0" : (key === "stake" ? "1" : "0.01");
+    input.max = key === "prob" ? "100" : undefined;
+    input.step = step;
+    input.placeholder = placeholder;
+    input.value = item[key];
+    if (key === "stake") input.className = "compact";
+
+    input.addEventListener("input", () => {
+      item[key] = input.value === "" ? "" : Number(input.value);
+      updateComboTotals();
+    });
+    td.appendChild(input);
+    return td;
+  }
+
+  function validCombo(c) {
+    return c.stake !== "" && c.odds !== "" && c.prob !== "" &&
+      Number.isFinite(Number(c.stake)) && Number(c.stake) > 0 &&
+      Number.isFinite(Number(c.odds)) && Number(c.odds) > 0 &&
+      Number.isFinite(Number(c.prob)) && Number(c.prob) >= 0 && Number(c.prob) <= 100;
+  }
+
+  function updateComboTotals() {
+    let totalStake = 0;
+    let totalExpectedProfit = 0;
+    let totalExpectedReturn = 0;
+    let validCount = 0;
+
+    combos.forEach(c => {
+      const evCell = document.querySelector(`[data-ev="${c.id}"]`);
+      const roiCell = document.querySelector(`[data-roi="${c.id}"]`);
+
+      if (validCombo(c)) {
+        const stake = Number(c.stake);
+        const odds = Number(c.odds);
+        const prob = Number(c.prob);
+        const ev = expected(stake, odds, prob);
+        const roi = odds * prob;
+
+        totalStake += stake;
+        totalExpectedProfit += ev;
+        totalExpectedReturn += stake * odds * prob / 100;
+        validCount++;
+
+        if (evCell) {
+          evCell.textContent = signedMoney(ev);
+          evCell.className = ev >= 0 ? "positive" : "negative";
+        }
+        if (roiCell) roiCell.textContent = pct(roi);
+      } else {
+        if (evCell) evCell.textContent = "—";
+        if (roiCell) roiCell.textContent = "—";
+      }
+    });
+
+    $("comboCount").textContent = combos.length + "点";
+    $("totalStake").textContent = money(totalStake);
+    $("totalEV").textContent = validCount ? signedMoney(totalExpectedProfit) : "—";
+    $("totalEV").className = "value " +
+      (totalExpectedProfit >= 0 ? "positive" : "negative");
+    $("totalROI").textContent = totalStake > 0
+      ? pct(totalExpectedReturn / totalStake * 100) : "—";
+  }
+
+  function saveRecord(record) {
+    history.unshift({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      date: todayLocal(),
+      race: record.race || "",
+      ticket: record.ticket || "",
+      odds: Number(record.odds) || 0,
+      stake: Number(record.stake) || 0,
+      payout: Number(record.payout) || 0
+    });
+  }
+
+  function saveSingle() {
+    updateSingle();
+    const stake = Number($("singleStake").value);
+    const odds = Number($("singleOdds").value);
+    const prob = Number($("singleProb").value);
+
+    if (!(stake > 0 && odds > 0 && prob >= 0 && prob <= 100)) {
+      alert("購入金額・オッズ・的中確率を正しく入力してください。");
+      return;
+    }
+
+    saveRecord({
+      race: "",
+      ticket: $("singleName").value.trim() || "単独計算の買い目",
+      odds, stake, payout: 0
+    });
+    persistHistory();
+    renderHistory();
+  }
+
+  function saveCombos() {
+    const valid = combos.filter(validCombo);
+    if (!valid.length) {
+      alert("オッズ・的中確率・購入金額を入力してください。");
+      return;
+    }
+
+    const race = $("raceName").value.trim();
+    const type = $("betType").value;
+
+    valid.forEach(c => saveRecord({
+      race,
+      ticket: `${type} ${c.ticket}`,
+      odds: c.odds,
+      stake: c.stake,
+      payout: 0
+    }));
+
+    persistHistory();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const body = $("historyBody");
+    body.innerHTML = "";
+
+    let totalStake = 0;
+    let totalPayout = 0;
+
+    history.forEach(record => {
+      totalStake += Number(record.stake) || 0;
+      totalPayout += Number(record.payout) || 0;
+
+      const tr = document.createElement("tr");
+
+      const dateCell = document.createElement("td");
+      const dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.value = record.date || todayLocal();
+      dateInput.addEventListener("change", () => {
+        record.date = dateInput.value;
+        persistHistory();
+      });
+      dateCell.appendChild(dateInput);
+      tr.appendChild(dateCell);
+
+      const ticketCell = document.createElement("td");
+      const ticketInput = document.createElement("input");
+      ticketInput.value = [record.race, record.ticket].filter(Boolean).join(" ");
+      ticketInput.style.minWidth = "150px";
+      ticketInput.addEventListener("change", () => {
+        const text = ticketInput.value.trim();
+        record.ticket = text;
+        record.race = "";
+        persistHistory();
+      });
+      ticketCell.appendChild(ticketInput);
+      tr.appendChild(ticketCell);
+
+      const oddsCell = document.createElement("td");
+      oddsCell.textContent = record.odds ? String(record.odds) : "—";
+      tr.appendChild(oddsCell);
+
+      const stakeCell = document.createElement("td");
+      stakeCell.textContent = money(record.stake);
+      tr.appendChild(stakeCell);
+
+      const payoutCell = document.createElement("td");
+      const payoutInput = document.createElement("input");
+      payoutInput.type = "number";
+      payoutInput.min = "0";
+      payoutInput.step = "1";
+      payoutInput.value = record.payout;
+      payoutInput.className = "compact";
+      payoutInput.addEventListener("change", () => {
+        record.payout = Math.max(0, Number(payoutInput.value) || 0);
+        persistHistory();
+        renderHistory();
+      });
+      payoutCell.appendChild(payoutInput);
+      tr.appendChild(payoutCell);
+
+      const netCell = document.createElement("td");
+      const net = Number(record.payout) - Number(record.stake);
+      netCell.textContent = signedMoney(net);
+      netCell.className = net >= 0 ? "positive" : "negative";
+      tr.appendChild(netCell);
+
+      const removeCell = document.createElement("td");
+      const remove = document.createElement("button");
+      remove.className = "small danger";
+      remove.textContent = "削除";
+      remove.addEventListener("click", () => {
+        if (!confirm("この履歴を削除しますか？")) return;
+        history = history.filter(h => h.id !== record.id);
+        persistHistory();
+        renderHistory();
+      });
+      removeCell.appendChild(remove);
+      tr.appendChild(removeCell);
+
+      body.appendChild(tr);
+    });
+
+    const net = totalPayout - totalStake;
+    $("historyStake").textContent = money(totalStake);
+    $("historyPayout").textContent = money(totalPayout);
+    $("historyNet").textContent = signedMoney(net);
+    $("historyNet").className = "value " + (net >= 0 ? "positive" : "negative");
+    $("historyROI").textContent = totalStake > 0
+      ? pct(totalPayout / totalStake * 100) : "—";
+  }
+
+  function csvEscape(value) {
+    const s = String(value == null ? "" : value);
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+
+  function downloadCSV(filename, rows) {
+    const csv = "\uFEFF" + rows.map(row => row.map(csvEscape).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportComboCSV() {
+    const rows = [["買い目", "オッズ", "的中確率(%)", "購入額(円)", "期待利益(円)", "期待回収率(%)"]];
+    combos.forEach(c => {
+      const ev = validCombo(c) ? expected(Number(c.stake), Number(c.odds), Number(c.prob)) : "";
+      const roi = validCombo(c) ? Number(c.odds) * Number(c.prob) : "";
+      rows.push([c.ticket, c.odds, c.prob, c.stake, ev === "" ? "" : Math.round(ev), roi]);
+    });
+    downloadCSV("keiba-bets.csv", rows);
+  }
+
+  function exportHistoryCSV() {
+    const rows = [["日付", "レース", "買い目", "オッズ", "購入額(円)", "払戻額(円)", "収支(円)"]];
+    history.slice().reverse().forEach(r => {
+      rows.push([
+        r.date, r.race, r.ticket, r.odds, r.stake, r.payout,
+        Number(r.payout) - Number(r.stake)
+      ]);
+    });
+    downloadCSV("keiba-history.csv", rows);
+  }
+
+  ["singleStake", "singleOdds", "singleProb"].forEach(id => {
+    $(id).addEventListener("input", updateSingle);
+  });
+  $("saveSingle").addEventListener("click", saveSingle);
+  $("buyMethod").addEventListener("change", refreshMethodFields);
+  $("generate").addEventListener("click", generate);
+  $("clearGenerated").addEventListener("click", () => {
+    combos = [];
+    $("comboBody").innerHTML = "";
+    $("generatedArea").classList.add("hidden");
+    $("generateStatus").textContent = "買い目をクリアしました。";
+  });
+  $("saveCombos").addEventListener("click", saveCombos);
+  $("exportCombos").addEventListener("click", exportComboCSV);
+  $("exportHistory").addEventListener("click", exportHistoryCSV);
+  $("clearHistory").addEventListener("click", () => {
+    if (!confirm("購入履歴をすべて削除します。この操作は取り消せません。")) return;
+    history = [];
+    persistHistory();
+    renderHistory();
+  });
+
+  readHistory();
+  updateSingle();
+  refreshMethodFields();
+  renderHistory();
 })();
 </script>
 </body>
