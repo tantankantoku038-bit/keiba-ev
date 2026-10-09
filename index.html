@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>競馬期待値計算ツール</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f3f5f8;color:#172033;margin:0;padding:20px}
+main{max-width:620px;margin:auto;background:white;padding:22px;border-radius:16px;box-shadow:0 4px 18px #0001}
+h1{font-size:25px}p{line-height:1.6;color:#596579}
+label{display:block;font-weight:bold;margin-top:16px}
+input,select{box-sizing:border-box;width:100%;padding:12px;margin-top:7px;border:1px solid #ccd3df;border-radius:8px;font-size:16px}
+button{width:100%;padding:14px;margin-top:20px;border:0;border-radius:9px;background:#126b4b;color:white;font-size:17px;font-weight:bold}
+.result{background:#eef7f1;padding:16px;border-radius:10px;margin-top:18px}
+.big{font-size:28px;font-weight:bold;color:#126b4b}
+.small{font-size:13px;color:#667085}
+</style>
+</head>
+<body>
+<main>
+<h1>🏇 競馬期待値計算ツール</h1>
+<p>オッズと自分で予想した的中確率から、馬券の期待値を計算します。</p>
+<label>馬券の名前（任意）</label>
+<input id="name" placeholder="例：東京11R 単勝3番">
+<label>購入金額（円）</label>
+<input id="stake" type="number" min="1" value="100">
+<label>オッズ（倍率）</label>
+<input id="odds" type="number" min="1.01" step="0.1" value="5">
+<label>自分が予想する的中確率（%）</label>
+<input id="prob" type="number" min="0" max="100" step="0.1" value="25">
+<button id="calc" type="button">期待値を計算</button>
+<div class="result" aria-live="polite">
+<div>期待利益（長期平均の理論値）</div>
+<div class="big" id="ev">+25円</div>
+<div id="roi">期待回収率：125%</div>
+<hr>
+<div id="break">損益分岐の的中確率：20%</div>
+<div id="return">的中時の払戻額：500円</div>
+<p class="small" id="note">※入力した確率が正しいと仮定した理論値です。的中を保証するものではありません。</p>
+</div>
+</main>
+<script>
+(function(){
+function calc(){
+var stake=Number(document.getElementById('stake').value);
+var odds=Number(document.getElementById('odds').value);
+var prob=Number(document.getElementById('prob').value);
+var ev=document.getElementById('ev');
+if(!Number.isFinite(stake)||!Number.isFinite(odds)||!Number.isFinite(prob)||stake<=0||odds<=1||prob<0||prob>100){
+ev.textContent='入力を確認してください';
+document.getElementById('roi').textContent='金額は1円以上、オッズは1より大きく、確率は0〜100%で入力してください。';
+document.getElementById('break').textContent='';
+document.getElementById('return').textContent='';
+return;
+}
+var expected=stake*(odds*prob/100-1);
+ev.textContent=(expected>0?'+':'')+Math.round(expected).toLocaleString('ja-JP')+'円';
+document.getElementById('roi').textContent='期待回収率：'+(odds*prob).toFixed(1)+'%';
+document.getElementById('break').textContent='損益分岐の的中確率：'+(100/odds).toFixed(2)+'%';
+document.getElementById('return').textContent='的中時の払戻額：約'+Math.round(stake*odds).toLocaleString('ja-JP')+'円';
+document.getElementById('note').textContent=' '+(expected>0?'理論上はプラス期待値です。ただし予測確率が正しいことが前提です。':'理論上はプラス期待値ではありません。予測確率の精度に注意してください。')+' 払戻額はオッズが変動すると変わります。';
+}
+document.getElementById('calc').addEventListener('click',calc);
+['stake','odds','prob'].forEach(function(id){document.getElementById(id).addEventListener('input',calc);});
+calc();
+})();
+</script>
+</body>
+</html>
