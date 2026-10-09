@@ -44,12 +44,12 @@ main{max-width:1180px;margin:20px auto;padding:0 14px 42px}.tabs{display:flex;ga
 <div id="oddsStatus" class="help" style="margin-top:10px">オッズデータは未読込です。</div>
 </div>
 <div class="card">
-<div class="section-title"><div><h2>4. 期待値ランキング</h2><p class="sub">推定的中確率は単勝オッズをもとにした簡易モデルです。実際の的中確率を保証しません。</p></div><span class="pill warn">推定モデル</span></div>
+<div class="section-title"><div><h2>4. 期待値ランキング</h2><p class="sub">単勝オッズから推定確率を計算し、三連複オッズが登録された全組み合わせから期待回収率100%超の候補を自動抽出できます。実際の的中確率や利益を保証しません。</p></div><span class="pill warn">推定モデル</span></div>
 <div class="grid">
 <div class="field"><label for="stake">1点あたりの購入金額（円）</label><input id="stake" type="number" min="100" step="100" value="100"></div>
 <div class="field"><label for="sortBy">ランキング順</label><select id="sortBy"><option value="roi">期待回収率が高い順</option><option value="prob">推定的中確率が高い順</option><option value="odds">オッズが高い順</option><option value="ev">期待収支が高い順</option></select></div>
 </div>
-<div class="actions"><button class="btn" id="calculate">期待値を計算</button><button class="btn secondary" id="exportPredictions">予測結果をCSV出力</button></div>
+<div class="actions"><button class="btn" id="calculate">期待値を計算</button><button class="btn" id="autoPositive">全組み合わせから期待値プラス候補を自動抽出</button><button class="btn secondary" id="exportPredictions">予測結果をCSV出力</button></div>
 <div id="resultSummary"></div><div id="rankingTable"></div>
 <div class="notice">モデルの限界：単勝オッズは市場評価の目安であり、馬同士の能力・展開・馬場状態などを完全には表しません。この計算は Plackett–Luce 型の簡易近似で、確率の精度は過去レースで検証する必要があります。期待回収率は利益の保証ではありません。</div>
 </div>
@@ -209,6 +209,32 @@ function calculate(){
   saveJSON(PREDICTION_KEY,{savedAt:predictionsSavedAt,runners,items:currentPredictions});
   renderRanking();
 }
+function autoFindPositiveEV(){
+  if(runners.length<3){alert("先に出走馬CSVを読み込んでください。");return;}
+  if(!trifectaOdds.size){alert("先に三連複オッズCSVを読み込んでください。自動抽出には各組み合わせのオッズが必要です。");return;}
+  const stake=Number($("stake").value);
+  if(!Number.isFinite(stake)||stake<1){alert("購入金額を正しく入力してください。");return;}
+  const weights=winWeights();
+  const all=[];
+  for(let i=0;i<runners.length;i++)for(let j=i+1;j<runners.length;j++)for(let k=j+1;k<runners.length;k++){
+    const nums=[runners[i].num,runners[j].num,runners[k].num];
+    const ticket=comboKey(nums), odds=trifectaOdds.get(ticket);
+    if(odds==null)continue;
+    const probability=trifectaProb(nums,weights);
+    const expectedReturn=probability*odds*100;
+    if(expectedReturn>100){
+      all.push({date:today(),race:"",ticket,nums,odds,probability,stake,expectedReturn,expectedProfit:stake*(probability*odds-1),breakEven:1/odds,winOdds:nums.map(n=>runners.find(h=>h.num===n)?.winOdds??null)});
+    }
+  }
+  generatedTickets=all.map(x=>x.nums);
+  currentPredictions=all;
+  predictionsSavedAt=new Date().toISOString();
+  saveJSON(PREDICTION_KEY,{savedAt:predictionsSavedAt,runners,items:currentPredictions});
+  renderRanking();
+  const summary=$("resultSummary");
+  summary.insertAdjacentHTML("beforeend",`<div class="notice blue">全 ${runners.length*(runners.length-1)*(runners.length-2)/6} 組み合わせのうち、オッズが登録され、簡易モデル上の期待回収率が100%を超えた ${all.length} 点を抽出しました。オッズが未登録の組み合わせは判定できません。</div>`);
+  if(!all.length)$("rankingTable").innerHTML='<div class="empty">簡易モデル上で期待回収率100%を超える候補は見つかりませんでした。これは「価値のある買い目が存在しない」と断定するものではありません。</div>';
+}
 function renderRanking(){
   const sort=$("sortBy").value;
   const arr=[...currentPredictions].sort((a,b)=>{
@@ -225,7 +251,7 @@ function renderRanking(){
     <div class="metric"><div class="label">オッズ未登録</div><div class="value">${missing.toLocaleString()}点</div></div>
   </div>${missing?'<div class="notice red">一部の買い目のオッズがありません。オッズ未登録の買い目はランキング評価から除外されています。</div>':''}
   <div class="notice blue">表示される確率は単勝オッズからのモデル推定です。実際の確率や利益を保証するものではありません。</div>`;
-  if(!arr.length){$("rankingTable").innerHTML='<div class="empty">買い目がありません。フォーメーションを確認してください。</div>';return;}
+  if(!arr.length){$("rankingTable").innerHTML='<div class="empty">買い目がありません。フォーメーションやオッズデータを確認してください。</div>';return;}
   $("rankingTable").innerHTML=`<div class="table-wrap"><table><thead><tr><th>順位</th><th>買い目</th><th>三連複オッズ</th><th>推定的中率</th><th>損益分岐確率</th><th>期待回収率</th><th>期待収支</th><th>履歴へ</th></tr></thead><tbody>${arr.map((x,i)=>`<tr><td><span class="rank">${i+1}</span></td><td><b>${x.ticket}</b></td><td>${x.odds==null?'<span class="pill warn">未登録</span>':fmt(x.odds,2)+"倍"}</td><td>${fmt(x.probability*100,3)}%</td><td>${x.breakEven==null?"—":fmt(x.breakEven*100,3)+"%"}</td><td>${x.expectedReturn==null?"—":`<span class="${x.expectedReturn>=100?"positive":"negative"}"><b>${fmt(x.expectedReturn,1)}%</b></span>`}</td><td>${x.expectedProfit==null?"—":`<span class="${x.expectedProfit>=0?"positive":"negative"}">${x.expectedProfit>=0?"+":""}${yen(x.expectedProfit)}</span>`}</td><td><button class="btn secondary" style="padding:6px 9px" data-add-ticket="${escapeHTML(x.ticket)}" data-odds="${x.odds??""}">保存</button></td></tr>`).join("")}</tbody></table></div>`;
   $("rankingTable").querySelectorAll("[data-add-ticket]").forEach(btn=>btn.addEventListener("click",()=>addPredictionToHistory(btn.dataset.addTicket,Number(btn.dataset.odds)||0)));
 }
@@ -308,6 +334,7 @@ $("selectAllSlots").addEventListener("click",()=>{if(!runners.length){alert("先
 $("clearSlots").addEventListener("click",()=>[1,2,3].forEach(s=>$("slot"+s).querySelectorAll("input").forEach(i=>i.checked=false)));
 $("generate").addEventListener("click",generate);
 $("calculate").addEventListener("click",calculate);
+$("autoPositive").addEventListener("click",autoFindPositiveEV);
 $("sortBy").addEventListener("change",()=>{if(currentPredictions.length)renderRanking();});
 $("exportPredictions").addEventListener("click",exportPredictionsCSV);
 $("exportHistory").addEventListener("click",exportHistoryCSV);
