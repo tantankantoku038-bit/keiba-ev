@@ -1,411 +1,627 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>競馬EVラボ | 期待値・収支分析</title>
+<title>競馬EVラボ</title>
 <style>
-:root{--bg:#0b1120;--panel:#141e30;--panel2:#1b2940;--text:#edf3fc;--muted:#93a4bd;--line:#2b3b54;--green:#34d399;--red:#fb7185;--blue:#7db5ff;--yellow:#fbbf24}
+:root{
+  --bg:#f4f6fb;--card:#fff;--text:#172033;--muted:#667085;
+  --line:#e4e8f0;--primary:#2457d6;--green:#13804a;
+  --red:#c62828;--orange:#b96908;--shadow:0 5px 20px #1720330b;
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-header{padding:24px 20px 18px;background:linear-gradient(120deg,#142a45,#101827);border-bottom:1px solid var(--line)}
+header{background:linear-gradient(135deg,#12294b,#2457d6);color:#fff;padding:24px 18px}
 .header-inner,main{max-width:1120px;margin:auto}
-.eyebrow{color:var(--green);font-size:12px;font-weight:800;letter-spacing:2px}
-h1{font-size:27px;margin:5px 0}
-header p{color:var(--muted);margin:0;font-size:13px}
-nav{display:flex;gap:8px;overflow-x:auto;padding:14px 16px;border-bottom:1px solid var(--line);background:#0e1727}
-nav button{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid var(--line);padding:10px 15px;border-radius:10px;cursor:pointer}
-nav button.active{background:var(--green);color:#06251b;border-color:var(--green);font-weight:800}
-main{padding:20px 16px 50px}
-.page{display:none}.page.active{display:block}
-h2{font-size:20px;margin:8px 0 5px}h3{font-size:15px;margin:0 0 12px}
-.sub{color:var(--muted);font-size:13px;margin:0 0 18px}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.panel,.metric{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:14px;min-width:0}
-.metric .label{font-size:12px;color:var(--muted)}.metric .value{font-size:24px;font-weight:800;margin-top:8px;overflow-wrap:anywhere}.metric .note{font-size:11px;color:var(--muted);margin-top:5px}
-.green{color:var(--green)!important}.red{color:var(--red)!important}.yellow{color:var(--yellow)!important}.muted{color:var(--muted)}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-input,select{width:100%;background:#0b1423;border:1px solid var(--line);color:var(--text);padding:11px;border-radius:9px;font:inherit;min-width:0}
-input:focus,select:focus{outline:1px solid var(--blue);border-color:var(--blue)}
-.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{margin-bottom:13px}
-button{font:inherit}
-.btn{background:var(--green);color:#06251b;border:0;border-radius:9px;padding:11px 15px;font-weight:800;cursor:pointer}
-.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
-.btn.danger{background:#42202c;color:#ffbdc7;border:1px solid #743044}
-.btn.small{padding:7px 10px;font-size:12px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.result{background:#0b1423;border:1px solid var(--line);border-radius:12px;padding:15px;margin-top:14px}
-.result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.result .big{font-size:20px;font-weight:800;margin-top:5px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;padding:10px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
-th{font-size:11px;color:var(--muted);font-weight:700}.table-wrap{overflow-x:auto}
-.badge{display:inline-block;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:800}
-.badge.hit{color:#8cf4c8;background:#123c32}.badge.miss{color:#ffb5c0;background:#48202b}.badge.pending{color:#c1ccdc;background:#2a3547}
-.race-card{border:1px solid var(--line);background:var(--panel);border-radius:13px;margin-bottom:12px;overflow:hidden}
-.race-head{padding:15px;display:flex;gap:12px;justify-content:space-between;align-items:center}
-.race-title{font-weight:800}.race-meta{font-size:12px;color:var(--muted);margin-top:4px}
-.race-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
-.race-detail{padding:0 12px 12px}
-details summary{cursor:pointer;color:var(--blue);font-size:13px;padding:8px 0}
-.bet-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0;background:#101a2b}
-.bet-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:27px;margin:0 0 7px}
+header p{margin:0;color:#dbe7ff;font-size:14px}
+main{padding:18px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+button,.tab{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;font-size:14px}
+.tab{background:#e7ebf5;color:#334155}
+.tab.active{background:var(--primary);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn{background:var(--primary);color:#fff}
+.btn.secondary{background:#e9eefb;color:#244ba8}
+.btn.danger{background:#fff0f0;color:var(--red)}
+.btn.small{padding:8px 11px;font-size:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+h2{font-size:19px;margin:0 0 14px}
+h3{font-size:15px;margin:0 0 10px}
+.muted,.chart-note{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.field{min-width:0}
+label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px}
+input,select,textarea{font:inherit;font-size:14px;width:100%;padding:10px;border:1px solid #d5dbea;border-radius:9px;background:#fff;color:var(--text);min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid #b9ccff;border-color:var(--primary)}
+input:disabled,input[readonly]{background:#f1f3f8;color:#596579}
+textarea{min-height:75px;resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.stat{padding:15px;border:1px solid var(--line);background:#fff;border-radius:14px;min-width:0}
+.stat .label{font-size:12px;color:var(--muted)}
+.stat .value{font-size:23px;font-weight:800;margin-top:6px;overflow-wrap:anywhere}
+.green{color:var(--green)}.red{color:var(--red)}.orange{color:var(--orange)}
+.section{display:none}.section.active{display:block}
+.list{display:grid;gap:12px}
+.bet-card{border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff}
+.bet-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.bet-select-label{display:flex;align-items:center;gap:8px;margin:0;min-width:0}
+.bet-select{width:17px;height:17px;flex-shrink:0}
 .bet-ticket{font-weight:800;overflow-wrap:anywhere}
-.bet-select-label{display:flex;align-items:center;gap:9px;margin:0;color:var(--text);min-width:0}
-.bet-select-label input{width:18px;height:18px;min-width:18px;margin:0;accent-color:var(--green);cursor:pointer}
-.bet-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
-.bet-fields input,.bet-fields select{padding:8px;font-size:12px}
-.bet-foot{font-size:12px;color:var(--muted);margin-top:9px}
-.chart{width:100%;height:auto;display:block;min-height:140px}
-.chart-note{font-size:12px;color:var(--muted)}
-.month-row{display:grid;grid-template-columns:85px 1fr 100px;gap:10px;align-items:center;margin:12px 0;font-size:12px}
-.bar-bg{height:9px;background:#26354b;border-radius:20px;overflow:hidden}.bar{height:100%;border-radius:20px}
-.empty{padding:28px 12px;text-align:center;color:var(--muted);font-size:13px}
-.notice{border-left:3px solid var(--yellow);background:#282418;color:#f9e2a4;padding:12px;border-radius:6px;font-size:12px;margin-bottom:15px}
-.footer{text-align:center;color:var(--muted);font-size:11px;margin-top:30px}
-.bulk-actions{padding:10px;background:#0e1727;border:1px solid var(--line);border-radius:10px;margin:10px 0}
-.bulk-actions select{width:auto;min-width:140px;padding:8px;font-size:12px}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}
+.badge.hit{background:#dff7e9;color:#11643a}
+.badge.miss{background:#ffe4e4;color:#a51f1f}
+.badge.pending{background:#fff0d6;color:#8b5300}
+.bet-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.bet-foot{font-size:13px;color:var(--muted);margin-top:12px}
+.money-input-wrap{display:flex;align-items:center;gap:7px}
+.money-input-wrap input{flex:1;min-width:0}
+.money-unit{font-size:14px;font-weight:700;color:var(--muted)}
+.bulk-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.bulk-bar select{width:auto;min-width:130px}
+.empty{padding:24px;text-align:center;color:var(--muted);background:#f8faff;border-radius:12px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-size:12px}
+.bar-row{display:grid;grid-template-columns:95px 1fr 80px;gap:10px;align-items:center;margin:10px 0;font-size:13px}
+.bar-track{height:10px;background:#edf0f7;border-radius:99px;overflow:hidden}
+.bar{height:100%;background:var(--primary);border-radius:99px}
+.notice{background:#f0f5ff;border:1px solid #d9e5ff;color:#294b8d;border-radius:10px;padding:11px;font-size:13px;line-height:1.6}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:16px}
 @media(max-width:760px){
- .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}
- .metric .value{font-size:21px}.fields{grid-template-columns:repeat(2,minmax(0,1fr))}
- .race-head{align-items:flex-start;flex-direction:column}.bet-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
- th,td{padding:8px 6px}
+  main{padding:12px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.four,.bet-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .panel{padding:14px}
+  h1{font-size:23px}
+}
+@media(max-width:420px){
+  .grid{grid-template-columns:1fr}
+  .bet-fields{grid-template-columns:1fr 1fr}
+  .stat .value{font-size:19px}
 }
 </style>
 </head>
 <body>
-<header><div class="header-inner">
-<div class="eyebrow">KEIBA ANALYTICS</div>
-<h1>競馬EVラボ</h1>
-<p>期待値を計算し、結果を記録し、次の予想に活かす。</p>
-</div></header>
-
-<nav>
-<button class="active" data-page="dashboard">ダッシュボード</button>
-<button data-page="ev">期待値計算</button>
-<button data-page="tickets">買い目作成</button>
-<button data-page="history">レース別履歴</button>
-<button data-page="analysis">収支分析</button>
-</nav>
+<header>
+  <div class="header-inner">
+    <h1>🏇 競馬EVラボ</h1>
+    <p>期待値を計算し、購入履歴を記録し、回収率と収支を振り返る。</p>
+  </div>
+</header>
 
 <main>
-<section id="dashboard" class="page active">
-<h2>ダッシュボード</h2>
-<p class="sub">購入記録と、結果が確定した馬券の成績をまとめて確認。</p>
-<div class="grid" id="dashboardMetrics"></div>
-<div class="two">
-<div class="panel"><h3>累計確定収支</h3><div id="dashboardChart"></div><p class="chart-note">的中・不的中を確定した馬券のみを集計します。</p></div>
-<div class="panel"><h3>直近のレース・購入記録</h3><div id="recentHistory"></div></div>
-</div>
-<div class="panel"><h3>使い方のポイント</h3>
-<p class="sub">① 期待値計算で予想の数字を確認 → ② 買い目作成で記録 → ③ レース後に的中・不的中と払戻金を入力 → ④ 分析で振り返り。</p>
-<p class="chart-note">「結果待ち」の馬券は確定収支・回収率の計算から除外されます。購入総額には含まれます。</p></div>
-</section>
+  <nav>
+    <button class="tab active" data-tab="dashboard">ダッシュボード</button>
+    <button class="tab" data-tab="calculator">期待値計算</button>
+    <button class="tab" data-tab="generator">買い目比較</button>
+    <button class="tab" data-tab="history">購入履歴</button>
+    <button class="tab" data-tab="analytics">分析</button>
+    <button class="tab" data-tab="backup">データ管理</button>
+  </nav>
 
-<section id="ev" class="page">
-<h2>期待値計算</h2><p class="sub">オッズと的中確率から、1点の期待収益を計算。</p>
-<div class="panel">
-<div class="fields">
-<div class="field"><label>レース名（任意）</label><input id="evRace" placeholder="例：東京11R"></div>
-<div class="field"><label>買い目・メモ</label><input id="evTicket" placeholder="例：単勝 7番"></div>
-<div class="field"><label>オッズ（倍率）</label><input id="evOdds" type="number" min="1" step="0.1" value="3.5"></div>
-<div class="field"><label>推定的中確率（%）</label><input id="evProb" type="number" min="0.1" max="100" step="0.1" value="35"></div>
-<div class="field"><label>購入予定額（円）</label><input id="evStake" type="number" min="100" step="100" value="1000"></div>
-<div class="field"><label>計算メモ（任意）</label><input id="evMemo" placeholder="例：展開が向きそう"></div>
-</div>
-<div class="actions"><button class="btn" id="calcEV">期待値を計算</button><button class="btn secondary" id="saveEV">購入記録に保存</button></div>
-<div class="result" id="evResult"></div></div>
-<div class="panel"><h3>計算式</h3>
-<p>期待払戻率 ＝ オッズ × 推定的中確率</p>
-<p>期待収支 ＝ 購入額 ×（オッズ × 推定的中確率 − 1）</p>
-<p class="chart-note">推定的中確率は自分で入力する予測値です。期待値がプラスでも、実際の的中や利益を保証するものではありません。</p></div>
-</section>
+  <section class="section active" id="dashboard">
+    <div class="stats" id="dashboardStats"></div>
+    <div class="panel">
+      <h2>最近の購入履歴</h2>
+      <div id="recentHistory"></div>
+    </div>
+    <div class="panel">
+      <h2>このサイトの使い方</h2>
+      <div class="notice">
+        ① 期待値計算で買い目の期待値を確認する。<br>
+        ② 購入した馬券を履歴に登録する。<br>
+        ③ レース結果が出たら「的中・不的中」を更新する。<br>
+        ④ 的中時は実際の払戻金を入力し、収支や回収率を確認する。<br>
+        ※ 結果待ちの馬券は確定収支の集計に含めません。
+      </div>
+    </div>
+  </section>
 
-<section id="tickets" class="page">
-<h2>買い目作成</h2><p class="sub">馬番を入力して組み合わせを作成。買い目ごとにオッズ・確率・購入額を調整できます。</p>
-<div class="panel">
-<div class="fields">
-<div class="field"><label>レース名</label><input id="genRace" placeholder="例：東京11R"></div>
-<div class="field"><label>券種</label><select id="genType"><option>単勝</option><option>複勝</option><option>枠連</option><option>馬連</option><option>馬単</option><option>ワイド</option><option>三連複</option><option>三連単</option></select></div>
-<div class="field"><label>馬番（カンマ・スペース区切り）</label><input id="genHorses" placeholder="例：2, 4, 7, 9"></div>
-<div class="field"><label>買い方</label><select id="genMethod">
-<option value="all">入力した馬番をすべて組み合わせる</option><option value="box2">2頭の組み合わせ（馬連・ワイド等）</option><option value="box3">3頭の組み合わせ（三連複等）</option><option value="axis2">1頭軸・相手を選ぶ（2頭組）</option><option value="axis3">1頭軸・相手を選ぶ（三連複）</option><option value="exacta">馬単・三連単の順序違いも作成</option>
-</select></div>
-<div class="field"><label>軸馬（軸買いの場合）</label><input id="genAxis" type="number" min="1" placeholder="例：7"></div>
-<div class="field"><label>1点あたり購入額（円）</label><input id="genStake" type="number" min="100" step="100" value="100"></div>
-</div>
-<div class="actions"><button class="btn" id="generateTickets">買い目を作成</button><button class="btn secondary" id="clearGenerated">クリア</button></div>
-<div id="generatedSummary" class="result" style="display:none"></div>
-<div class="table-wrap"><table><thead><tr><th>買い目</th><th>オッズ</th><th>的中確率%</th><th>購入額</th><th>期待収支</th><th></th></tr></thead><tbody id="generatedBody"></tbody></table></div>
-<div class="actions"><button class="btn" id="saveGenerated">すべて履歴に保存</button></div>
-<p class="chart-note">組み合わせ作成時はオッズ・的中確率の初期値を仮置きしています。各買い目の数字を自分の予想に合わせて修正してください。軸買いでは「馬番」に相手馬を含め、軸馬は別欄に入力してください。</p>
-</div></section>
+  <section class="section" id="calculator">
+    <div class="panel">
+      <h2>期待値計算</h2>
+      <p class="muted">期待回収額と期待収支を計算します。オッズは倍率で入力してください。</p>
+      <div class="grid">
+        <div class="field"><label>買い目</label><input id="calcTicket" placeholder="例：単勝 5番"></div>
+        <div class="field"><label>オッズ</label><input id="calcOdds" type="number" min="0" step="0.1" placeholder="例：4.5"></div>
+        <div class="field"><label>的中確率（％）</label><input id="calcProb" type="number" min="0" max="100" step="0.1" placeholder="例：30"></div>
+        <div class="field"><label>購入額（円）</label><input id="calcStake" type="number" min="0" step="100" value="100"></div>
+      </div>
+      <div class="actions"><button class="btn" id="calcButton">期待値を計算</button></div>
+      <div id="calcResult"></div>
+    </div>
+  </section>
 
-<section id="history" class="page">
-<h2>レース別履歴</h2><p class="sub">レースごとに購入記録をまとめ、複数の馬券の結果をまとめて更新できます。</p>
-<div class="panel">
-<div class="fields">
-<div class="field"><label>レース名で検索</label><input id="historySearch" placeholder="レース名・買い目"></div>
-<div class="field"><label>結果で絞り込む</label><select id="historyFilter"><option value="all">すべて</option><option value="pending">結果待ち</option><option value="hit">的中</option><option value="miss">不的中</option></select></div>
-</div>
-<div class="actions"><button class="btn secondary" id="exportCSV">CSVバックアップを出力</button><button class="btn secondary" id="importCSVButton">CSVから復元</button><input type="file" id="importCSVFile" accept=".csv,text/csv" style="display:none"></div>
-</div>
-<div id="historyGroups"></div>
-<div class="panel"><h3>履歴の取り扱い</h3><p class="chart-note">履歴はこのブラウザのローカルストレージに保存されます。ブラウザや端末を変えると自動では同期されません。定期的にCSVをバックアップしてください。</p></div>
-</section>
+  <section class="section" id="generator">
+    <div class="panel">
+      <h2>複数の買い目を比較</h2>
+      <p class="muted">買い目ごとのオッズ、的中確率、購入額を入力して比較します。</p>
+      <div class="grid four">
+        <div class="field"><label>買い目</label><input id="genTicket" placeholder="例：複勝 3番"></div>
+        <div class="field"><label>オッズ</label><input id="genOdds" type="number" min="0" step="0.1" placeholder="3.0"></div>
+        <div class="field"><label>的中確率（％）</label><input id="genProb" type="number" min="0" max="100" step="0.1" placeholder="40"></div>
+        <div class="field"><label>購入額（円）</label><input id="genStake" type="number" min="0" step="100" value="100"></div>
+      </div>
+      <div class="actions"><button class="btn" id="addCompare">比較リストに追加</button><button class="btn secondary" id="clearCompare">リストを空にする</button></div>
+      <div id="compareList"></div>
+    </div>
+    <div class="panel">
+      <h2>購入履歴に登録</h2>
+      <div class="grid">
+        <div class="field"><label>日付</label><input id="newDate" type="date"></div>
+        <div class="field"><label>レース名</label><input id="newRace" placeholder="例：東京11R"></div>
+        <div class="field"><label>買い目</label><input id="newTicket" placeholder="例：単勝 5番"></div>
+        <div class="field"><label>オッズ</label><input id="newOdds" type="number" min="0" step="0.1" placeholder="4.5"></div>
+        <div class="field"><label>購入額（円）</label><input id="newStake" type="number" min="0" step="100" value="100"></div>
+        <div class="field"><label>結果</label><select id="newStatus"><option value="pending">結果待ち</option><option value="hit">的中</option><option value="miss">不的中</option></select></div>
+        <div class="field"><label>払戻金（円）</label><input id="newPayout" type="number" min="0" step="100" value="0"></div>
+        <div class="field"><label>メモ</label><input id="newMemo" placeholder="任意"></div>
+      </div>
+      <div class="actions"><button class="btn" id="addBet">履歴に登録</button></div>
+    </div>
+  </section>
 
-<section id="analysis" class="page">
-<h2>収支分析</h2><p class="sub">確定済みの記録から月別・券種別の傾向を確認。</p>
-<div class="grid" id="analysisMetrics"></div>
-<div class="two"><div class="panel"><h3>月別の確定収支</h3><div id="monthlyChart"></div></div><div class="panel"><h3>券種別の確定収支</h3><div id="typeChart"></div></div></div>
-<div class="panel"><h3>月別詳細</h3><div class="table-wrap"><table><thead><tr><th>月</th><th>確定点数</th><th>購入額</th><th>払戻額</th><th>収支</th><th>回収率</th></tr></thead><tbody id="monthlyTable"></tbody></table></div></div>
-<div class="panel"><h3>券種別詳細</h3><div class="table-wrap"><table><thead><tr><th>券種</th><th>確定点数</th><th>的中</th><th>購入額</th><th>払戻額</th><th>収支</th><th>回収率</th></tr></thead><tbody id="typeTable"></tbody></table></div></section>
-<div class="footer">KEIBA EV LAB · 数値は入力データに基づく参考情報です。</div>
+  <section class="section" id="history">
+    <div class="panel">
+      <h2>購入履歴</h2>
+      <div class="grid">
+        <div class="field"><label>キーワード検索</label><input id="historySearch" placeholder="レース名・買い目"></div>
+        <div class="field"><label>結果で絞り込み</label><select id="historyFilter"><option value="all">すべて</option><option value="pending">結果待ち</option><option value="hit">的中</option><option value="miss">不的中</option></select></div>
+      </div>
+      <div class="bulk-bar">
+        <button class="btn secondary small" id="selectAll">表示中をすべて選択</button>
+        <button class="btn secondary small" id="deselectAll">選択解除</button>
+        <select id="bulkStatus">
+          <option value="hit">一括で的中</option>
+          <option value="miss">一括で不的中</option>
+          <option value="pending">一括で結果待ち</option>
+        </select>
+        <button class="btn small" id="applyBulk">選択した馬券に適用</button>
+      </div>
+      <div id="historyList" class="list"></div>
+    </div>
+  </section>
+
+  <section class="section" id="analytics">
+    <div class="stats" id="analyticsStats"></div>
+    <div class="panel">
+      <h2>月別収支</h2>
+      <div id="monthlyChart"></div>
+    </div>
+    <div class="panel">
+      <h2>結果別集計</h2>
+      <div id="resultBreakdown"></div>
+    </div>
+  </section>
+
+  <section class="section" id="backup">
+    <div class="panel">
+      <h2>データ管理</h2>
+      <div class="notice">履歴データはこのブラウザに保存されます。ブラウザのデータ削除などで消える場合があるため、定期的にCSVを保存してください。</div>
+      <div class="actions">
+        <button class="btn" id="exportCsv">CSVを書き出す</button>
+        <button class="btn secondary" id="exportJson">JSONバックアップ</button>
+      </div>
+      <hr>
+      <h3>CSVを読み込む</h3>
+      <p class="muted">このツールから書き出したCSVを読み込めます。既存データに追加されます。</p>
+      <input id="importCsv" type="file" accept=".csv,text/csv">
+      <div class="actions"><button class="btn" id="importCsvButton">CSVを読み込む</button></div>
+      <hr>
+      <h3>すべての履歴を削除</h3>
+      <p class="muted">削除前にCSVまたはJSONでバックアップしてください。</p>
+      <button class="btn danger" id="clearAll">全履歴を削除</button>
+    </div>
+  </section>
 </main>
+
+<footer>競馬EVラボ｜記録と振り返りのためのツール</footer>
 
 <script>
 "use strict";
-const STORAGE_KEY="keibaEVHistoryV1";
-const TYPES=["単勝","複勝","枠連","馬連","馬単","ワイド","三連複","三連単"];
-let history=loadHistory(),generated=[];
+
+const STORAGE_KEY = "keibaEVHistoryV1";
+let history = loadHistory();
+let compareItems = [];
 
 function loadHistory(){
- try{
-  const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
-  if(!Array.isArray(raw))return [];
-  return raw.map((x,i)=>({id:x.id||("old-"+i+"-"+Date.now()),date:x.date||new Date().toISOString().slice(0,10),race:x.race||"",ticket:x.ticket||"買い目未設定",odds:Number(x.odds)||0,stake:Number(x.stake)||0,payout:Number(x.payout)||0,status:["hit","miss","pending"].includes(x.status)?x.status:"pending",memo:x.memo||""}));
- }catch(e){return []}
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const data = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(data)) return [];
+    return data.map(b=>({
+      id:String(b.id || makeId()),
+      date:b.date || today(),
+      race:b.race || "",
+      ticket:b.ticket || "",
+      odds:Number(b.odds)||0,
+      stake:Number(b.stake)||0,
+      payout:Number(b.payout)||0,
+      status:["hit","miss","pending"].includes(b.status)?b.status:"pending",
+      memo:b.memo || ""
+    }));
+  }catch(e){
+    console.error(e);
+    return [];
+  }
 }
-function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(history))}
-function escapeHTML(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function yen(n){return Math.round(Number(n)||0).toLocaleString("ja-JP")+"円"}
-function num(n){return (Number(n)||0).toLocaleString("ja-JP")}
-function pct(n){return Number.isFinite(n)?n.toFixed(1)+"%":"—"}
-function signedYen(n){n=Number(n)||0;return (n>0?"+":"")+yen(n)}
-function statusName(s){return s==="hit"?"的中":s==="miss"?"不的中":"結果待ち"}
-function statusBadge(s){return `<span class="badge ${s}">${statusName(s)}</span>`}
-function settled(b){return b.status==="hit"||b.status==="miss"}
-function realizedStake(list){return list.filter(settled).reduce((s,b)=>s+b.stake,0)}
-function realizedPayout(list){return list.filter(settled).reduce((s,b)=>s+b.payout,0)}
-function realizedProfit(list){return list.filter(settled).reduce((s,b)=>s+b.payout-b.stake,0)}
-function roi(list){const s=realizedStake(list);return s?realizedPayout(list)/s*100:NaN}
-function hitRate(list){const done=list.filter(settled);return done.length?done.filter(b=>b.status==="hit").length/done.length*100:NaN}
-function ticketType(ticket){return TYPES.find(t=>String(ticket).includes(t))||"その他"}
-function dateText(d){return d||"日付未設定"}
-function metric(label,value,note="",cls=""){return `<div class="metric"><div class="label">${label}</div><div class="value ${cls}">${value}</div><div class="note">${note}</div></div>`}
-function setPage(id){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));renderAll()}
-document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>setPage(b.dataset.page)));
+function persist(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(history));
+}
+function makeId(){
+  return Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+}
+function today(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function yen(value){
+  return Math.round(Number(value)||0).toLocaleString("ja-JP")+"円";
+}
+function signedYen(value){
+  const n=Math.round(Number(value)||0);
+  return (n>0?"+":"")+n.toLocaleString("ja-JP")+"円";
+}
+function statusName(status){
+  return status==="hit"?"的中":status==="miss"?"不的中":"結果待ち";
+}
+function statusBadge(status){
+  return `<span class="badge ${status}">${statusName(status)}</span>`;
+}
+function settled(){
+  return history.filter(b=>b.status==="hit"||b.status==="miss");
+}
+function settledStake(){
+  return settled().reduce((sum,b)=>sum+(Number(b.stake)||0),0);
+}
+function settledPayout(){
+  return settled().reduce((sum,b)=>sum+(b.status==="miss"?0:(Number(b.payout)||0)),0);
+}
+function settledProfit(){
+  return settledPayout()-settledStake();
+}
+function roi(){
+  const stake=settledStake();
+  return stake?settledPayout()/stake*100:0;
+}
+function statCard(label,value,extra=""){
+  return `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div>${extra?`<div class="muted">${extra}</div>`:""}</div>`;
+}
+function switchTab(tab){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===tab));
+  if(tab==="dashboard")renderDashboard();
+  if(tab==="history")renderHistory();
+  if(tab==="analytics")renderAnalytics();
+}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 
-function calcEV(){
- const odds=Number(document.getElementById("evOdds").value),prob=Number(document.getElementById("evProb").value)/100,stake=Number(document.getElementById("evStake").value);
- if(!(odds>0)||!(prob>0&&prob<=1)||!(stake>0)){return null}
- const expectedReturn=odds*prob*100,expectedProfit=stake*(odds*prob-1),breakEven=1/odds*100;
- document.getElementById("evResult").innerHTML=`<div class="result-grid"><div><div class="label">期待払戻率</div><div class="big ${expectedReturn>=100?"green":"red"}">${pct(expectedReturn)}</div></div><div><div class="label">期待収支</div><div class="big ${expectedProfit>=0?"green":"red"}">${signedYen(expectedProfit)}</div></div><div><div class="label">損益分岐確率</div><div class="big">${pct(breakEven)}</div></div></div><p class="chart-note">期待払戻額：約${yen(stake*odds*prob)}。入力した的中確率が損益分岐確率を上回るか確認してください。</p>`;
- return {odds,prob,stake,expectedReturn,expectedProfit};
-}
-document.getElementById("calcEV").addEventListener("click",()=>{if(!calcEV())alert("オッズ、的中確率、購入額を正しく入力してください。")});
-["evOdds","evProb","evStake"].forEach(id=>document.getElementById(id).addEventListener("input",calcEV));
-document.getElementById("saveEV").addEventListener("click",()=>{
- const v=calcEV();if(!v){alert("オッズ、的中確率、購入額を正しく入力してください。");return}
- history.unshift({id:makeId(),date:today(),race:document.getElementById("evRace").value.trim(),ticket:document.getElementById("evTicket").value.trim()||"期待値計算の買い目",odds:v.odds,stake:v.stake,payout:0,status:"pending",memo:document.getElementById("evMemo").value.trim()});
- persist();renderAll();alert("購入記録に保存しました。結果は「レース別履歴」から更新できます。");
-});
-function makeId(){return Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9)}
-function today(){return new Date().toISOString().slice(0,10)}
-function combos(arr,k,ordered=false){
- const out=[];function go(path,remaining){if(path.length===k){out.push(path.slice());return}remaining.forEach((x,i)=>go([...path,x],ordered?remaining.filter((_,j)=>j!==i):remaining.slice(i+1)))}
- go([],arr);return out;
-}
-function generateTickets(){
- const type=document.getElementById("genType").value,method=document.getElementById("genMethod").value;
- const horses=[...new Set(document.getElementById("genHorses").value.split(/[,\s、]+/).map(x=>Number(x.trim())).filter(x=>Number.isInteger(x)&&x>0))];
- const axis=Number(document.getElementById("genAxis").value),stake=Number(document.getElementById("genStake").value)||100;
- if(!horses.length){alert("馬番を2, 4, 7のように入力してください。");return}
- if(!(stake>0)){alert("購入額を入力してください。");return}
- const ordered=type==="馬単"||type==="三連単"||method==="exacta";
- let k=1;if(["枠連","馬連","馬単","ワイド"].includes(type))k=2;if(["三連複","三連単"].includes(type))k=3;
- if(method==="box2")k=2;if(method==="box3"||method==="axis3")k=3;
- if(horses.length<k&&!(method.startsWith("axis")&&axis>0)){alert("組み合わせに必要な馬番が足りません。");return}
- let list=[];
- if(method==="axis2"||method==="axis3"){
-  if(!(axis>0)){alert("軸馬を入力してください。");return}
-  const opponents=horses.filter(h=>h!==axis),r=method==="axis2"?1:2;
-  if(opponents.length<r){alert("相手馬の数が足りません。");return}
-  list=combos(opponents,r).map(c=>[axis,...c]);
-  if(ordered&&type==="馬単")list=list.flatMap(c=>[[c[0],c[1]],[c[1],c[0]]]);
-  if(ordered&&type==="三連単")list=list.flatMap(c=>combos(c,3,true));
- }else list=combos(horses,k,ordered);
- list=list.map(a=>type==="単勝"||type==="複勝"?[a[0]]:a);
- const seen=new Set();
- list=list.filter(a=>{const key=ordered?a.join("-"):[...a].sort((x,y)=>x-y).join("-");if(seen.has(key))return false;seen.add(key);return true});
- generated=list.map(a=>({id:makeId(),ticket:type+" "+a.join("-"),odds:0,prob:0,stake,payout:0}));
- renderGenerated();
-}
-document.getElementById("generateTickets").addEventListener("click",generateTickets);
-document.getElementById("clearGenerated").addEventListener("click",()=>{generated=[];renderGenerated()});
-function renderGenerated(){
- const body=document.getElementById("generatedBody"),summary=document.getElementById("generatedSummary");
- if(!generated.length){body.innerHTML="";summary.style.display="none";return}
- summary.style.display="block";summary.innerHTML=`作成点数：<b>${generated.length}点</b>　合計購入予定額：<b>${yen(generated.reduce((s,b)=>s+b.stake,0))}</b>`;
- body.innerHTML=generated.map(b=>`<tr><td>${escapeHTML(b.ticket)}</td><td><input type="number" min="0" step="0.1" value="${b.odds||""}" placeholder="オッズ" data-id="${b.id}" data-key="odds"></td><td><input type="number" min="0" max="100" step="0.1" value="${b.prob||""}" placeholder="%" data-id="${b.id}" data-key="prob"></td><td><input type="number" min="0" step="100" value="${b.stake}" data-id="${b.id}" data-key="stake"></td><td class="${b.odds>0&&b.prob>0?(b.odds*b.prob/100>=1?"green":"red"):"muted"}">${b.odds>0&&b.prob>0?signedYen(b.stake*(b.odds*b.prob/100-1)):"—"}</td><td><button class="btn danger small" data-remove="${b.id}">削除</button></td></tr>`).join("");
- body.querySelectorAll("input[data-id]").forEach(input=>input.addEventListener("change",()=>{const b=generated.find(x=>x.id===input.dataset.id);if(!b)return;b[input.dataset.key]=Number(input.value)||0;renderGenerated()}));
- body.querySelectorAll("[data-remove]").forEach(btn=>btn.addEventListener("click",()=>{generated=generated.filter(b=>b.id!==btn.dataset.remove);renderGenerated()}));
-}
-document.getElementById("saveGenerated").addEventListener("click",()=>{
- if(!generated.length){alert("先に買い目を作成してください。");return}
- const race=document.getElementById("genRace").value.trim();
- if(generated.some(b=>!(b.stake>0))){alert("購入額を確認してください。");return}
- const records=generated.map(b=>({id:makeId(),date:today(),race,ticket:b.ticket,odds:b.odds,stake:b.stake,payout:0,status:"pending"}));
- history=[...records,...history];persist();renderAll();alert(records.length+"点を履歴に保存しました。");
-});
+function renderDashboard(){
+  document.getElementById("dashboardStats").innerHTML=[
+    statCard("確定収支",`<span class="${settledProfit()>=0?"green":"red"}">${signedYen(settledProfit())}</span>`),
+    statCard("回収率",`${roi().toFixed(1)}%`),
+    statCard("確定購入額",yen(settledStake())),
+    statCard("結果待ち",`${history.filter(b=>b.status==="pending").length}件`)
+  ].join("");
 
-function groupHistory(list){
- const map=new Map();
- list.forEach(b=>{const key=b.race.trim()?b.date+"::"+b.race.trim():"single::"+b.id;if(!map.has(key))map.set(key,{key,date:b.date,race:b.race||"レース名未設定",items:[]});map.get(key).items.push(b)});
- return [...map.values()].sort((a,b)=>b.date.localeCompare(a.date));
+  const recent=[...history].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  document.getElementById("recentHistory").innerHTML=recent.length?`
+    <div class="table-wrap"><table><thead><tr><th>日付</th><th>レース</th><th>買い目</th><th>結果</th><th>収支</th></tr></thead><tbody>
+    ${recent.map(b=>`<tr><td>${escapeHTML(b.date)}</td><td>${escapeHTML(b.race)}</td><td>${escapeHTML(b.ticket)}</td><td>${statusBadge(b.status)}</td><td>${b.status==="pending"?"未確定":`<span class="${b.payout-b.stake>=0?"green":"red"}">${signedYen((b.status==="miss"?0:b.payout)-b.stake)}</span>`}</td></tr>`).join("")}
+    </tbody></table></div>`:`<div class="empty">まだ履歴がありません。購入した馬券を登録してみましょう。</div>`;
 }
-function renderHistory(){
- const search=(document.getElementById("historySearch").value||"").toLowerCase(),filter=document.getElementById("historyFilter").value;
- const list=history.filter(b=>(!search||(b.race+" "+b.ticket).toLowerCase().includes(search))&&(filter==="all"||b.status===filter));
- const groups=groupHistory(list),root=document.getElementById("historyGroups");
- if(!groups.length){root.innerHTML='<div class="panel empty">記録がありません。期待値計算または買い目作成から保存してください。</div>';return}
- root.innerHTML=groups.map((g,i)=>{
-  const items=g.items,done=items.filter(settled),profit=realizedProfit(items),pending=items.filter(b=>!settled(b)).length;
-  return `<div class="race-card">
-  <div class="race-head"><div><div class="race-title">${escapeHTML(g.race)}</div><div class="race-meta">${escapeHTML(dateText(g.date))} · ${items.length}点</div>
-  <div class="race-stats"><span>購入総額 ${yen(items.reduce((s,b)=>s+b.stake,0))}</span><span>確定収支 <b class="${profit>=0?"green":"red"}">${signedYen(profit)}</b></span><span>確定回収率 ${pct(roi(items))}</span><span>結果待ち ${pending}点</span></div></div><div>${done.length}点確定</div></div>
-  <div class="race-detail">
-    <div class="bulk-actions">
-      <div class="chart-note">一括更新：対象の馬券にチェックを入れてください。</div>
-      <div class="actions">
-        <button type="button" class="btn secondary small" data-select-all>このレースをすべて選択</button>
-        <button type="button" class="btn secondary small" data-select-none>選択解除</button>
-        <select data-bulk-status aria-label="一括更新する結果"><option value="hit">的中にする</option><option value="miss">不的中にする</option><option value="pending">結果待ちに戻す</option></select>
-        <button type="button" class="btn small" data-bulk-apply>選択した馬券を更新</button>
-      </div>
+
+function calculateEV(odds,prob,stake){
+  const expectedReturn=odds*(prob/100)*stake;
+  return {expectedReturn,expectedProfit:expectedReturn-stake,evRate:stake?expectedReturn/stake*100:0};
+}
+document.getElementById("calcButton").addEventListener("click",()=>{
+  const odds=Number(document.getElementById("calcOdds").value);
+  const prob=Number(document.getElementById("calcProb").value);
+  const stake=Number(document.getElementById("calcStake").value);
+  if(odds<=0||prob<0||prob>100||stake<=0){
+    alert("オッズ、的中確率、購入額を正しく入力してください。");
+    return;
+  }
+  const r=calculateEV(odds,prob,stake);
+  document.getElementById("calcResult").innerHTML=`
+    <hr><div class="stats">
+      ${statCard("買い目",escapeHTML(document.getElementById("calcTicket").value||"未入力"))}
+      ${statCard("期待回収額",yen(r.expectedReturn))}
+      ${statCard("期待収支",`<span class="${r.expectedProfit>=0?"green":"red"}">${signedYen(r.expectedProfit)}</span>`)}
+      ${statCard("期待回収率",`${r.evRate.toFixed(1)}%`)}
     </div>
-    <details ${i===0?"open":""}><summary>このレースの馬券を表示・編集</summary>${items.map(b=>renderBetCard(b)).join("")}</details>
-  </div></div>`;
- }).join("");
+    <p class="muted">期待回収額＝購入額×オッズ×的中確率。入力した的中確率が妥当であることを前提とした推定値です。</p>`;
+});
 
- root.querySelectorAll("[data-select-all]").forEach(btn=>btn.addEventListener("click",()=>{
-  btn.closest(".race-card").querySelectorAll(".bet-select").forEach(box=>box.checked=true);
- }));
- root.querySelectorAll("[data-select-none]").forEach(btn=>btn.addEventListener("click",()=>{
-  btn.closest(".race-card").querySelectorAll(".bet-select").forEach(box=>box.checked=false);
- }));
- root.querySelectorAll("[data-bulk-apply]").forEach(btn=>btn.addEventListener("click",()=>{
-  const card=btn.closest(".race-card"),selected=[...card.querySelectorAll(".bet-select:checked")];
-  if(!selected.length){alert("更新する馬券にチェックを入れてください。");return}
-  const status=card.querySelector("[data-bulk-status]").value,label=statusName(status);
-  if(!confirm(selected.length+"件を「"+label+"」に変更しますか？"))return;
-  const ids=new Set(selected.map(box=>box.dataset.selectBet));
-  history.forEach(b=>{if(ids.has(b.id))b.status=status});
-  persist();renderAll();alert(selected.length+"件を「"+label+"」に更新しました。");
- }));
-
- root.querySelectorAll("[data-save-bet]").forEach(btn=>btn.addEventListener("click",()=>{
-  const b=history.find(x=>x.id===btn.dataset.saveBet);if(!b)return;
-  const card=btn.closest(".bet-card");
-  b.status=card.querySelector('[data-field="status"]').value;
-  b.payout=Number(card.querySelector('[data-field="payout"]').value)||0;
-  b.stake=Number(card.querySelector('[data-field="stake"]').value)||0;
-  b.odds=Number(card.querySelector('[data-field="odds"]').value)||0;
-  b.race=card.querySelector('[data-field="race"]').value.trim();
-  b.ticket=card.querySelector('[data-field="ticket"]').value.trim()||"買い目未設定";
-  b.date=card.querySelector('[data-field="date"]').value||today();
-  persist();renderAll();
- }));
- root.querySelectorAll("[data-delete-bet]").forEach(btn=>btn.addEventListener("click",()=>{
-  if(!confirm("この購入記録を削除しますか？"))return;
-  history=history.filter(x=>x.id!==btn.dataset.deleteBet);persist();renderAll();
- }));
+function renderCompare(){
+  const root=document.getElementById("compareList");
+  if(!compareItems.length){root.innerHTML='<div class="empty">比較する買い目を追加してください。</div>';return;}
+  const rows=compareItems.map((b,i)=>({...b,...calculateEV(b.odds,b.prob,b.stake),i}));
+  root.innerHTML=`<hr><div class="table-wrap"><table><thead><tr><th>買い目</th><th>オッズ</th><th>的中率</th><th>購入額</th><th>期待収支</th><th>期待回収率</th><th></th></tr></thead><tbody>
+  ${rows.sort((a,b)=>b.evRate-a.evRate).map(b=>`<tr><td>${escapeHTML(b.ticket)}</td><td>${b.odds}</td><td>${b.prob}%</td><td>${yen(b.stake)}</td><td class="${b.expectedProfit>=0?"green":"red"}">${signedYen(b.expectedProfit)}</td><td><b>${b.evRate.toFixed(1)}%</b></td><td><button class="btn danger small" data-remove-compare="${b.i}">削除</button></td></tr>`).join("")}
+  </tbody></table></div>`;
+  root.querySelectorAll("[data-remove-compare]").forEach(btn=>btn.addEventListener("click",()=>{
+    compareItems.splice(Number(btn.dataset.removeCompare),1);renderCompare();
+  }));
 }
+document.getElementById("addCompare").addEventListener("click",()=>{
+  const ticket=document.getElementById("genTicket").value.trim();
+  const odds=Number(document.getElementById("genOdds").value);
+  const prob=Number(document.getElementById("genProb").value);
+  const stake=Number(document.getElementById("genStake").value);
+  if(!ticket||odds<=0||prob<0||prob>100||stake<=0){
+    alert("買い目、オッズ、的中確率、購入額を正しく入力してください。");return;
+  }
+  compareItems.push({ticket,odds,prob,stake});
+  renderCompare();
+});
+document.getElementById("clearCompare").addEventListener("click",()=>{
+  compareItems=[];renderCompare();
+});
+
+document.getElementById("newDate").value=today();
+document.getElementById("addBet").addEventListener("click",()=>{
+  const date=document.getElementById("newDate").value||today();
+  const race=document.getElementById("newRace").value.trim();
+  const ticket=document.getElementById("newTicket").value.trim();
+  const odds=Number(document.getElementById("newOdds").value)||0;
+  const stake=Number(document.getElementById("newStake").value)||0;
+  const status=document.getElementById("newStatus").value;
+  let payout=Number(document.getElementById("newPayout").value)||0;
+  const memo=document.getElementById("newMemo").value.trim();
+  if(!race||!ticket||stake<=0){alert("レース名、買い目、購入額を入力してください。");return;}
+  if(status==="miss")payout=0;
+  history.unshift({id:makeId(),date,race,ticket,odds,stake,payout,status,memo});
+  persist();
+  document.getElementById("newRace").value="";
+  document.getElementById("newTicket").value="";
+  document.getElementById("newOdds").value="";
+  document.getElementById("newStake").value="100";
+  document.getElementById("newStatus").value="pending";
+  document.getElementById("newPayout").value="0";
+  document.getElementById("newMemo").value="";
+  renderDashboard();renderHistory();renderAnalytics();
+  alert("購入履歴に登録しました。");
+});
+document.getElementById("newStatus").addEventListener("change",()=>{
+  const status=document.getElementById("newStatus").value;
+  const payout=document.getElementById("newPayout");
+  if(status==="miss"){payout.value="0";payout.readOnly=true;}
+  else{payout.readOnly=false;}
+});
+
 function renderBetCard(b){
- return `<div class="bet-card" data-bet="${escapeHTML(b.id)}">
- <div class="bet-top"><label class="bet-select-label"><input type="checkbox" class="bet-select" data-select-bet="${escapeHTML(b.id)}"><span class="bet-ticket">${escapeHTML(b.ticket)}</span></label>${statusBadge(b.status)}</div>
- <div class="bet-fields">
- <div><label>日付</label><input type="date" data-field="date" value="${escapeHTML(b.date)}"></div>
- <div><label>レース名</label><input data-field="race" value="${escapeHTML(b.race)}" placeholder="レース名"></div>
- <div><label>買い目</label><input data-field="ticket" value="${escapeHTML(b.ticket)}"></div>
- <div><label>結果</label><select data-field="status"><option value="pending" ${b.status==="pending"?"selected":""}>結果待ち</option><option value="hit" ${b.status==="hit"?"selected":""}>的中</option><option value="miss" ${b.status==="miss"?"selected":""}>不的中</option></select></div>
- <div><label>払戻金（円）</label><input type="number" min="0" step="100" data-field="payout" value="${b.payout}"></div>
- <div><label>購入額（円）</label><input type="number" min="0" step="100" data-field="stake" value="${b.stake}"></div>
- <div><label>オッズ</label><input type="number" min="0" step="0.1" data-field="odds" value="${b.odds||""}"></div>
- </div>
- <div class="bet-foot">この馬券の収支：<b class="${b.payout-b.stake>=0?"green":"red"}">${signedYen(b.payout-b.stake)}</b>（結果確定時のみ全体分析に反映）</div>
- <div class="actions"><button class="btn small" data-save-bet="${escapeHTML(b.id)}">変更を保存</button><button class="btn danger small" data-delete-bet="${escapeHTML(b.id)}">削除</button></div>
- </div>`;
+  const payoutValue=b.status==="miss"?0:(Number(b.payout)>0?b.payout:"");
+  return `<div class="bet-card" data-bet="${escapeHTML(b.id)}">
+    <div class="bet-top">
+      <label class="bet-select-label"><input type="checkbox" class="bet-select" data-select-bet="${escapeHTML(b.id)}"><span class="bet-ticket">${escapeHTML(b.ticket)}</span></label>
+      ${statusBadge(b.status)}
+    </div>
+    <div class="bet-fields">
+      <div><label>日付</label><input type="date" data-field="date" value="${escapeHTML(b.date)}"></div>
+      <div><label>レース名</label><input data-field="race" value="${escapeHTML(b.race)}"></div>
+      <div><label>買い目</label><input data-field="ticket" value="${escapeHTML(b.ticket)}"></div>
+      <div><label>結果</label><select data-field="status">
+        <option value="pending" ${b.status==="pending"?"selected":""}>結果待ち</option>
+        <option value="hit" ${b.status==="hit"?"selected":""}>的中</option>
+        <option value="miss" ${b.status==="miss"?"selected":""}>不的中</option>
+      </select></div>
+      <div><label>払戻金</label><div class="money-input-wrap"><input type="number" min="0" step="100" data-field="payout" value="${payoutValue}" placeholder="${b.status==="hit"?"実際の金額を入力":"結果確定後に入力"}"><span class="money-unit">円</span></div><div class="chart-note" data-payout-note></div></div>
+      <div><label>購入額</label><div class="money-input-wrap"><input type="number" min="0" step="100" data-field="stake" value="${b.stake}"><span class="money-unit">円</span></div></div>
+      <div><label>オッズ</label><input type="number" min="0" step="0.1" data-field="odds" value="${b.odds||""}"></div>
+      <div><label>メモ</label><input data-field="memo" value="${escapeHTML(b.memo||"")}"></div>
+    </div>
+    <div class="bet-foot">確定収支：${b.status==="pending"?"未確定":`<b class="${(b.status==="miss"?0:b.payout)-b.stake>=0?"green":"red"}">${signedYen((b.status==="miss"?0:b.payout)-b.stake)}</b>`}</div>
+    <div class="actions"><button class="btn small" data-save-bet="${escapeHTML(b.id)}">変更を保存</button><button class="btn danger small" data-delete-bet="${escapeHTML(b.id)}">削除</button></div>
+  </div>`;
 }
+
+function syncPayoutInput(card,changed){
+  const status=card.querySelector('[data-field="status"]').value;
+  const payout=card.querySelector('[data-field="payout"]');
+  const note=card.querySelector("[data-payout-note]");
+  if(status==="miss"){
+    payout.value="0";
+    payout.disabled=true;
+    note.textContent="不的中のため払戻金は自動で0円になります。";
+  }else if(status==="hit"){
+    payout.disabled=false;
+    if(changed&&Number(payout.value)===0)payout.value="";
+    note.textContent="実際に払い戻された金額を入力してください。";
+  }else{
+    payout.disabled=true;
+    note.textContent="結果待ちのため、確定収支には反映されません。";
+  }
+}
+
+function renderHistory(){
+  const root=document.getElementById("historyList");
+  const q=document.getElementById("historySearch").value.trim().toLowerCase();
+  const filter=document.getElementById("historyFilter").value;
+  const items=[...history].filter(b=>(filter==="all"||b.status===filter)&&`${b.race} ${b.ticket} ${b.memo}`.toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
+  root.innerHTML=items.length?items.map(renderBetCard).join(""):'<div class="empty">該当する履歴がありません。</div>';
+
+  root.querySelectorAll(".bet-card").forEach(card=>{
+    const statusSelect=card.querySelector('[data-field="status"]');
+    syncPayoutInput(card,false);
+    statusSelect.addEventListener("change",()=>syncPayoutInput(card,true));
+  });
+
+  root.querySelectorAll("[data-save-bet]").forEach(btn=>btn.addEventListener("click",()=>{
+    const b=history.find(x=>x.id===btn.dataset.saveBet);
+    const card=btn.closest(".bet-card");
+    if(!b||!card)return;
+    b.date=card.querySelector('[data-field="date"]').value||today();
+    b.race=card.querySelector('[data-field="race"]').value.trim();
+    b.ticket=card.querySelector('[data-field="ticket"]').value.trim();
+    b.status=card.querySelector('[data-field="status"]').value;
+    if(b.status==="miss"){
+      b.payout=0;
+    }else if(b.status==="hit"){
+      b.payout=Math.max(0,Number(card.querySelector('[data-field="payout"]').value)||0);
+    }
+    b.stake=Math.max(0,Number(card.querySelector('[data-field="stake"]').value)||0);
+    b.odds=Math.max(0,Number(card.querySelector('[data-field="odds"]').value)||0);
+    b.memo=card.querySelector('[data-field="memo"]').value.trim();
+    persist();renderHistory();renderDashboard();renderAnalytics();
+    alert("変更を保存しました。");
+  }));
+
+  root.querySelectorAll("[data-delete-bet]").forEach(btn=>btn.addEventListener("click",()=>{
+    if(!confirm("この購入履歴を削除しますか？"))return;
+    history=history.filter(b=>b.id!==btn.dataset.deleteBet);
+    persist();renderHistory();renderDashboard();renderAnalytics();
+  }));
+  root.querySelectorAll("[data-select-bet]").forEach(box=>box.addEventListener("change",()=>{
+    const card=box.closest(".bet-card");
+    card.classList.toggle("selected",box.checked);
+  }));
+}
+
 document.getElementById("historySearch").addEventListener("input",renderHistory);
 document.getElementById("historyFilter").addEventListener("change",renderHistory);
+document.getElementById("selectAll").addEventListener("click",()=>{
+  document.querySelectorAll("#historyList [data-select-bet]").forEach(b=>b.checked=true);
+});
+document.getElementById("deselectAll").addEventListener("click",()=>{
+  document.querySelectorAll("#historyList [data-select-bet]").forEach(b=>b.checked=false);
+});
+document.getElementById("applyBulk").addEventListener("click",()=>{
+  const ids=new Set([...document.querySelectorAll("#historyList [data-select-bet]:checked")].map(b=>b.dataset.selectBet));
+  if(!ids.size){alert("変更する馬券にチェックを入れてください。");return;}
+  const status=document.getElementById("bulkStatus").value;
+  history.forEach(b=>{
+    if(ids.has(b.id)){
+      b.status=status;
+      if(status==="miss")b.payout=0;
+    }
+  });
+  persist();renderHistory();renderDashboard();renderAnalytics();
+  alert(`${ids.size}件の結果を「${statusName(status)}」に更新しました。`);
+});
 
-function svgLineChart(points){
- if(!points.length)return '<div class="empty">結果確定後にグラフが表示されます。</div>';
- const w=620,h=230,pad=35,vals=points.map(p=>p.value);
- let min=Math.min(0,...vals),max=Math.max(0,...vals);if(min===max){min-=100;max+=100}
- const x=i=>pad+(points.length===1?(w-2*pad)/2:i*(w-2*pad)/(points.length-1)),y=v=>h-pad-(v-min)/(max-min)*(h-2*pad);
- const zero=y(0),coords=points.map((p,i)=>`${x(i)},${y(p.value)}`).join(" ");
- const circles=points.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.value)}" r="4" fill="#34d399"><title>${escapeHTML(p.label)}: ${signedYen(p.value)}</title></circle>`).join("");
- const labels=points.length<=7?points.map((p,i)=>`<text x="${x(i)}" y="${h-8}" font-size="10" text-anchor="middle" fill="#93a4bd">${escapeHTML(p.label)}</text>`).join(""):"";
- return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="累計確定収支グラフ"><line x1="${pad}" y1="${zero}" x2="${w-pad}" y2="${zero}" stroke="#52627a" stroke-dasharray="4 4"/><polyline points="${coords}" fill="none" stroke="#34d399" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>${circles}${labels}<text x="${pad}" y="16" fill="#93a4bd" font-size="11">${yen(max)}</text><text x="${pad}" y="${h-pad+14}" fill="#93a4bd" font-size="11">${yen(min)}</text></svg>`;
+function renderAnalytics(){
+  const settledItems=settled();
+  const hits=settledItems.filter(b=>b.status==="hit");
+  const misses=settledItems.filter(b=>b.status==="miss");
+  const pending=history.filter(b=>b.status==="pending");
+  document.getElementById("analyticsStats").innerHTML=[
+    statCard("確定収支",`<span class="${settledProfit()>=0?"green":"red"}">${signedYen(settledProfit())}</span>`),
+    statCard("回収率",`${roi().toFixed(1)}%`),
+    statCard("的中率",`${settledItems.length?(hits.length/settledItems.length*100).toFixed(1):"0.0"}%`),
+    statCard("結果待ち",`${pending.length}件`)
+  ].join("");
+
+  const months={};
+  settledItems.forEach(b=>{
+    const month=(b.date||today()).slice(0,7);
+    if(!months[month])months[month]={stake:0,payout:0};
+    months[month].stake+=Number(b.stake)||0;
+    months[month].payout+=b.status==="miss"?0:(Number(b.payout)||0);
+  });
+  const monthKeys=Object.keys(months).sort().slice(-12);
+  const max=Math.max(1,...monthKeys.map(m=>Math.abs(months[m].payout-months[m].stake)));
+  document.getElementById("monthlyChart").innerHTML=monthKeys.length?monthKeys.map(m=>{
+    const profit=months[m].payout-months[m].stake;
+    const width=Math.max(2,Math.abs(profit)/max*100);
+    return `<div class="bar-row"><span>${m}</span><div class="bar-track"><div class="bar" style="width:${width}%;background:${profit>=0?"#13804a":"#c62828"}"></div></div><b class="${profit>=0?"green":"red"}">${signedYen(profit)}</b></div>`;
+  }).join(""):'<div class="empty">確定した履歴がまだありません。</div>';
+
+  document.getElementById("resultBreakdown").innerHTML=`
+    <div class="grid">
+      <div class="stat"><div class="label">的中件数</div><div class="value green">${hits.length}件</div><div class="muted">払戻金合計：${yen(hits.reduce((s,b)=>s+(Number(b.payout)||0),0))}</div></div>
+      <div class="stat"><div class="label">不的中件数</div><div class="value red">${misses.length}件</div><div class="muted">払戻金合計：${yen(0)}</div></div>
+    </div>
+    <p class="muted">結果待ちの馬券は収支・回収率・的中率の確定集計から除外されます。</p>`;
 }
-function svgBars(items){
- if(!items.length)return '<div class="empty">データがありません。</div>';
- const w=620,row=35,h=Math.max(100,items.length*row+25),left=120,right=65,max=Math.max(1,...items.map(x=>Math.abs(x.value)));
- return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="収支の棒グラフ">${items.map((it,i)=>{const y=14+i*row,width=Math.abs(it.value)/max*(w-left-right),color=it.value>=0?"#34d399":"#fb7185";return `<text x="${left-10}" y="${y+14}" fill="#cbd5e1" font-size="11" text-anchor="end">${escapeHTML(it.label)}</text><rect x="${left}" y="${y}" width="${Math.max(2,width)}" height="19" rx="4" fill="${color}"/><text x="${Math.min(w-4,left+width+7)}" y="${y+14}" fill="#edf3fc" font-size="10">${signedYen(it.value)}</text>`}).join("")}</svg>`;
+
+function downloadFile(name,content,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=name;a.click();
+  URL.revokeObjectURL(url);
 }
-function renderDashboard(){
- const allStake=history.reduce((s,b)=>s+b.stake,0),settledList=history.filter(settled),profit=realizedProfit(history),totalReturn=realizedPayout(history);
- document.getElementById("dashboardMetrics").innerHTML=metric("購入総額（全記録）",yen(allStake),"結果待ちの馬券を含む")+metric("確定払戻",yen(totalReturn),"的中・不的中の確定記録のみ")+metric("確定収支",signedYen(profit),settledList.length+"点の確定記録",profit>=0?"green":"red")+metric("確定回収率",pct(roi(history)),settledList.length+"点の確定記録");
- const sorted=history.filter(settled).slice().sort((a,b)=>a.date.localeCompare(b.date));let running=0;const byDate=new Map();
- sorted.forEach(b=>{running+=b.payout-b.stake;byDate.set(b.date,running)});
- document.getElementById("dashboardChart").innerHTML=svgLineChart([...byDate].map(([label,value])=>({label,value})));
- const recent=history.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
- document.getElementById("recentHistory").innerHTML=recent.length?recent.map(b=>`<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:8px"><b>${escapeHTML(b.ticket)}</b>${statusBadge(b.status)}</div><div class="race-meta">${escapeHTML(b.date)} · ${escapeHTML(b.race||"レース名未設定")}</div></div>`).join(""):'<div class="empty">まだ購入記録がありません。</div>';
+function csvCell(value){
+  const s=String(value??"");
+  return `"${s.replace(/"/g,'""')}"`;
 }
-function renderAnalysis(){
- const done=history.filter(settled),profit=realizedProfit(done);
- document.getElementById("analysisMetrics").innerHTML=metric("確定点数",num(done.length),"的中・不的中")+metric("的中率",pct(hitRate(done)),"確定した馬券に占める的中割合")+metric("確定収支",signedYen(profit),"払戻金−確定済み購入額",profit>=0?"green":"red")+metric("確定回収率",pct(roi(done)),"確定済み購入額に対する払戻率");
- const monthly=new Map(),byType=new Map();
- done.forEach(b=>{const m=(b.date||"日付未設定").slice(0,7);if(!monthly.has(m))monthly.set(m,[]);monthly.get(m).push(b);const t=ticketType(b.ticket);if(!byType.has(t))byType.set(t,[]);byType.get(t).push(b)});
- const months=[...monthly].sort((a,b)=>a[0].localeCompare(b[0])),types=[...byType].sort((a,b)=>realizedProfit(b[1])-realizedProfit(a[1]));
- document.getElementById("monthlyChart").innerHTML=svgBars(months.slice(-12).map(([label,list])=>({label,value:realizedProfit(list)})));
- document.getElementById("typeChart").innerHTML=svgBars(types.map(([label,list])=>({label,value:realizedProfit(list)})));
- document.getElementById("monthlyTable").innerHTML=months.length?months.slice().reverse().map(([m,list])=>`<tr><td>${escapeHTML(m)}</td><td>${list.length}</td><td>${yen(realizedStake(list))}</td><td>${yen(realizedPayout(list))}</td><td class="${realizedProfit(list)>=0?"green":"red"}">${signedYen(realizedProfit(list))}</td><td>${pct(roi(list))}</td></tr>`).join(""):'<tr><td colspan="6" class="muted">確定記録がありません。</td></tr>';
- document.getElementById("typeTable").innerHTML=types.length?types.map(([t,list])=>`<tr><td>${escapeHTML(t)}</td><td>${list.length}</td><td>${list.filter(b=>b.status==="hit").length}</td><td>${yen(realizedStake(list))}</td><td>${yen(realizedPayout(list))}</td><td class="${realizedProfit(list)>=0?"green":"red"}">${signedYen(realizedProfit(list))}</td><td>${pct(roi(list))}</td></tr>`).join(""):'<tr><td colspan="7" class="muted">確定記録がありません。</td></tr>';
-}
-function renderAll(){renderDashboard();renderHistory();renderAnalysis()}
-function csvEscape(v){return '"'+String(v??"").replace(/"/g,'""')+'"'}
-function exportCSV(){
- const headers=["id","date","race","ticket","odds","stake","payout","status","memo"],rows=[headers,...history.map(b=>headers.map(k=>b[k]??""))];
- const csv="\uFEFF"+rows.map(row=>row.map(csvEscape).join(",")).join("\r\n"),blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
- const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keiba-ev-history-"+today()+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
-}
-document.getElementById("exportCSV").addEventListener("click",exportCSV);
-document.getElementById("importCSVButton").addEventListener("click",()=>document.getElementById("importCSVFile").click());
-document.getElementById("importCSVFile").addEventListener("change",async e=>{
- const file=e.target.files[0];if(!file)return;
- try{
-  const text=await file.text(),rows=parseCSV(text.replace(/^\uFEFF/,""));
-  if(rows.length<2)throw new Error("CSVに記録がありません。");
-  const headers=rows[0].map(x=>x.trim());
-  const imported=rows.slice(1).filter(r=>r.some(v=>v!=="")).map(r=>{const o={};headers.forEach((h,i)=>o[h]=r[i]??"");return {id:o.id||makeId(),date:o.date||today(),race:o.race||"",ticket:o.ticket||"買い目未設定",odds:Number(o.odds)||0,stake:Number(o.stake)||0,payout:Number(o.payout)||0,status:["hit","miss","pending"].includes(o.status)?o.status:"pending",memo:o.memo||""}});
-  if(!confirm(imported.length+"件の記録を取り込みます。現在の履歴に追加しますか？"))return;
-  const ids=new Set(history.map(b=>b.id));imported.forEach(b=>{if(ids.has(b.id))b.id=makeId();history.push(b)});
-  persist();renderAll();alert(imported.length+"件を取り込みました。");
- }catch(err){alert("CSVを読み込めませんでした。正しいバックアップCSVか確認してください。\n"+err.message)}
- finally{e.target.value=""}
+document.getElementById("exportCsv").addEventListener("click",()=>{
+  const cols=["id","date","race","ticket","odds","stake","payout","status","memo"];
+  const rows=[cols,...history.map(b=>cols.map(k=>b[k]??""))];
+  downloadFile(`keiba-ev-${today()}.csv`,"\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8");
+});
+document.getElementById("exportJson").addEventListener("click",()=>{
+  downloadFile(`keiba-ev-backup-${today()}.json`,JSON.stringify(history,null,2),"application/json;charset=utf-8");
 });
 function parseCSV(text){
- const rows=[];let row=[],cell="",quoted=false;
- for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')quoted=false;else cell+=c}else{if(c==='"')quoted=true;else if(c===","){row.push(cell);cell=""}else if(c==="\n"){row.push(cell.replace(/\r$/,""));rows.push(row);row=[];cell=""}else cell+=c}}
- if(cell.length||row.length){row.push(cell.replace(/\r$/,""));rows.push(row)}
- return rows;
+  const rows=[];let row=[],cell="",quoted=false;
+  text=text.replace(/^\uFEFF/,"");
+  for(let i=0;i<text.length;i++){
+    const c=text[i],next=text[i+1];
+    if(quoted){
+      if(c==='"'&&next==='"'){cell+='"';i++;}
+      else if(c==='"')quoted=false;
+      else cell+=c;
+    }else{
+      if(c==='"')quoted=true;
+      else if(c===","){row.push(cell);cell="";}
+      else if(c==="\n"){row.push(cell);rows.push(row);row=[];cell="";}
+      else if(c!=="\r")cell+=c;
+    }
+  }
+  if(cell.length||row.length){row.push(cell);rows.push(row);}
+  return rows.filter(r=>r.some(c=>c!==""));
 }
-calcEV();
-renderAll();
+document.getElementById("importCsvButton").addEventListener("click",async()=>{
+  const file=document.getElementById("importCsv").files[0];
+  if(!file){alert("読み込むCSVファイルを選んでください。");return;}
+  try{
+    const text=await file.text();
+    const rows=parseCSV(text);
+    if(rows.length<2){alert("CSVにデータがありません。");return;}
+    const headers=rows[0].map(h=>h.trim());
+    const added=[];
+    for(const row of rows.slice(1)){
+      const obj={};
+      headers.forEach((h,i)=>obj[h]=row[i]??"");
+      if(!obj.race&&!obj.ticket)continue;
+      const status=["hit","miss","pending"].includes(obj.status)?obj.status:"pending";
+      added.push({
+        id:makeId(),date:obj.date||today(),race:obj.race||"",ticket:obj.ticket||"",
+        odds:Number(obj.odds)||0,stake:Number(obj.stake)||0,
+        payout:status==="miss"?0:(Number(obj.payout)||0),status,memo:obj.memo||""
+      });
+    }
+    if(!added.length){alert("読み込める履歴がありません。CSVの列名を確認してください。");return;}
+    history.push(...added);persist();renderHistory();renderDashboard();renderAnalytics();
+    alert(`${added.length}件の履歴を追加しました。`);
+  }catch(e){
+    console.error(e);alert("CSVを読み込めませんでした。");
+  }
+});
+document.getElementById("clearAll").addEventListener("click",()=>{
+  if(!confirm("すべての購入履歴を削除します。この操作は取り消せません。続けますか？"))return;
+  history=[];persist();renderDashboard();renderHistory();renderAnalytics();
+  alert("すべての履歴を削除しました。");
+});
+
+renderDashboard();
+renderCompare();
+renderHistory();
+renderAnalytics();
 </script>
 </body>
 </html>
